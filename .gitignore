@@ -1,0 +1,7 @@
+﻿*.osm
+*.osm.pbf
+*.csv
+*.pkl
+venv/
+.vscode/
+__pycache__/
