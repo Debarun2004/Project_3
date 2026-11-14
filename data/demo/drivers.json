@@ -1,0 +1,79 @@
+[
+  {
+    "id": "DRV-001",
+    "name": "Aritra Sen",
+    "phone": "9000000101",
+    "licence_number": "WB-FIC-2026-001",
+    "experience_years": 9,
+    "rating": 4.8,
+    "status": "on_duty",
+    "truck_id": "TRK-001",
+    "route_name": "Kolkata North Delivery"
+  },
+  {
+    "id": "DRV-002",
+    "name": "Rohan Chatterjee",
+    "phone": "9000000102",
+    "licence_number": "WB-FIC-2026-002",
+    "experience_years": 12,
+    "rating": 4.6,
+    "status": "on_duty",
+    "truck_id": "TRK-002",
+    "route_name": "Salt Lake Express"
+  },
+  {
+    "id": "DRV-003",
+    "name": "Sayan Mukherjee",
+    "phone": "9000000103",
+    "licence_number": "WB-FIC-2026-003",
+    "experience_years": 6,
+    "rating": 4.7,
+    "status": "on_duty",
+    "truck_id": "TRK-003",
+    "route_name": "Howrah Central Route"
+  },
+  {
+    "id": "DRV-004",
+    "name": "Debolina Roy",
+    "phone": "9000000104",
+    "licence_number": "WB-FIC-2026-004",
+    "experience_years": 14,
+    "rating": 4.9,
+    "status": "on_duty",
+    "truck_id": "TRK-004",
+    "route_name": "New Town Business Route"
+  },
+  {
+    "id": "DRV-005",
+    "name": "Aniket Ghosh",
+    "phone": "9000000105",
+    "licence_number": "WB-FIC-2026-005",
+    "experience_years": 5,
+    "rating": 4.8,
+    "status": "on_duty",
+    "truck_id": "TRK-005",
+    "route_name": "Park Street Courier Route"
+  },
+  {
+    "id": "DRV-006",
+    "name": "Soham Banerjee",
+    "phone": "9000000106",
+    "licence_number": "WB-FIC-2026-006",
+    "experience_years": 10,
+    "rating": 4.5,
+    "status": "off_duty",
+    "truck_id": null,
+    "route_name": null
+  },
+  {
+    "id": "DRV-007",
+    "name": "Moumita Das",
+    "phone": "9000000107",
+    "licence_number": "WB-FIC-2026-007",
+    "experience_years": 13,
+    "rating": 4.4,
+    "status": "off_duty",
+    "truck_id": null,
+    "route_name": null
+  }
+]

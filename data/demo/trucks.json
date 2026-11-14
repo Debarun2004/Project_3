@@ -1,0 +1,74 @@
+[
+  {
+    "id": "TRK-001",
+    "registration_number": "WB-FIC-TRK-001",
+    "vehicle_type": "mini_truck",
+    "Payload": 2000,
+    "status": "on_road",
+    "driver_id": "DRV-001",
+    "route_name": "Kolkata North Delivery"
+  },
+  {
+    "id": "TRK-002",
+    "registration_number": "WB-FIC-TRK-002",
+    "vehicle_type": "van",
+    "Payload": 1500,
+    "status": "on_road",
+    "driver_id": "DRV-002",
+    "route_name": "Salt Lake Express"
+  },
+  {
+    "id": "TRK-003",
+    "registration_number": "WB-FIC-TRK-003",
+    "vehicle_type": "truck",
+    "Payload": 8000,
+    "status": "on_road",
+    "driver_id": "DRV-003",
+    "route_name": "Howrah Central Route"
+  },
+  {
+    "id": "TRK-004",
+    "registration_number": "WB-FIC-TRK-004",
+    "vehicle_type": "truck",
+    "Payload": 12000,
+    "status": "on_road",
+    "driver_id": "DRV-004",
+    "route_name": "New Town Business Route"
+  },
+  {
+    "id": "TRK-005",
+    "registration_number": "WB-FIC-TRK-005",
+    "vehicle_type": "mini_truck",
+    "Payload": 2500,
+    "status": "on_road",
+    "driver_id": "DRV-005",
+    "route_name": "Park Street Courier Route"
+  },
+  {
+    "id": "TRK-006",
+    "registration_number": "WB-FIC-TRK-006",
+    "vehicle_type": "van",
+    "Payload": 1500,
+    "status": "garage",
+    "driver_id": null,
+    "route_name": null
+  },
+  {
+    "id": "TRK-007",
+    "registration_number": "WB-FIC-TRK-007",
+    "vehicle_type": "truck",
+    "Payload": 10000,
+    "status": "garage",
+    "driver_id": null,
+    "route_name": null
+  },
+  {
+    "id": "TRK-008",
+    "registration_number": "WB-FIC-TRK-008",
+    "vehicle_type": "mini_truck",
+    "Payload": 2000,
+    "status": "idle",
+    "driver_id": null,
+    "route_name": null
+  }
+]

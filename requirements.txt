@@ -1,0 +1,15 @@
+fastapi
+uvicorn[standard]
+pydantic
+pandas
+numpy
+networkx
+osmnx
+xgboost
+joblib
+python-dotenv
+pytest
+httpx
+SQLAlchemy
+PyMySQL
+osmium
