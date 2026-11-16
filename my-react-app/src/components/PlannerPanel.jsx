@@ -1,10 +1,10 @@
 import { useState } from "react";
-import { Clock, Fuel, Info, Leaf, MessageSquare, Package, Route, Ruler, Send, Star } from "lucide-react";
-import { PREFS, option, useCompare } from "../hooks";
+import { Check, CheckCheck, Clock, Fuel, Leaf, MessageSquare, Package, Route, Ruler, Send, Star } from "lucide-react";
+import { PREFS, option, useRoutes } from "../hooks";
 import RouteMap from "./RouteMap";
 import { Status, Region } from "./ui";
 import { regionOf } from "../data/places";
-import { useT, noteText } from "../i18n";
+import { useT, noteText, noteTime } from "../i18n";
 
 const STOPS = [0, 50, 100];
 const TABS = [["route", Route], ["message", MessageSquare], ["deliveries", Package]];
@@ -17,15 +17,18 @@ export default function PlannerPanel({ driver: wd, truck: wt, trip, plan, assign
   const [tab, setTab] = useState("route");
   const [bal, setBal] = useState(STOPS[Math.max(PREFS.indexOf(plan), 0)]);
   const [msg, setMsg] = useState("");
-  const { data, error } = useCompare(trip, wt);
+  const routes = useRoutes(trip, wt), data = routes?.options ? routes : null;
 
   const pref = PREFS[bal < 34 ? 0 : bal < 67 ? 1 : 2];
   const pick = data && option(data, pref), base = data && option(data, PREFS[0]);
   const dMin = pick && pick.min - base.min, dCo = pick && Math.round(((base.co2 - pick.co2) / base.co2) * 100);
   const dFuel = pick && +(base.fuel - pick.fuel).toFixed(1), dKm = pick && +(pick.km - base.km).toFixed(1);
-  const mine = notes.filter((n) => n.to === wd.id);
-  const assign = () => { assignPlan(wd.id, pref); sendNote({ key: "note.plan", vars: { pref } }, wd.id); };
-  const send = () => { sendNote({ text: msg.trim() }, wd.id); setMsg(""); };
+  const mine = notes.filter((n) => n.driver_id === wd.id);
+  const [busy, setBusy] = useState(false);
+  const [failed, setFailed] = useState(false);
+  const run = (job) => { setBusy(true); setFailed(false); job().then(() => setBusy(false), () => { setBusy(false); setFailed(true); }); };
+  const assign = () => run(() => assignPlan(wd.id, pref));
+  const send = () => run(() => sendNote(wd.id, msg.trim()).then(() => setMsg("")));
   const progress = trip && trip.parcels_total ? trip.parcels_delivered / trip.parcels_total : 0;
 
   return (
@@ -55,9 +58,8 @@ export default function PlannerPanel({ driver: wd, truck: wt, trip, plan, assign
           <input type="range" min="0" max="100" value={bal} onChange={(e) => setBal(+e.target.value)} aria-label={`${t("ends.fast")} – ${t("ends.green")}`} />
           <div className="chips">{PREFS.map((p, i) => <button key={p} className={pref === p ? "on" : ""} onClick={() => setBal(STOPS[i])}>{t(`pref.${p}`)}</button>)}</div>
           {pick && <h3 className="ask">{pick.pref === base.pref ? t("ask.base") : t("ask.save", { p: dCo, m: dMin })}</h3>}
-          <RouteMap trip={trip} progress={progress} />
-          {error && <p className="empty">{t("cmp.failed")} ({error.message})</p>}
-          {!data && !error && <p className="empty">{t("loading")}</p>}
+          <RouteMap trip={trip} truck={wt} pref={pref} progress={progress} />
+          {!data && <p className="empty">{t(routes ? "map.via.loading" : "map.unknown")}</p>}
           {pick && (<>
             <div className="metrics four">
               <div><small><Clock size={13} />{t("m.time")}</small><b>{t("min", { n: pick.min })}</b><span>{dMin ? t("plusMin", { n: dMin }) : t("baseline")}</span></div>
@@ -65,17 +67,19 @@ export default function PlannerPanel({ driver: wd, truck: wt, trip, plan, assign
               <div><small><Fuel size={13} />{t("why.fuel")}</small><b>{t("lit", { n: pick.fuel })}</b><span>{dFuel ? `−${t("lit", { n: dFuel })}` : t("baseline")}</span></div>
               <div><small><Ruler size={13} />{t("why.dist")}</small><b>{t("km", { n: pick.km })}</b><span>{dKm ? t("moreKm", { n: dKm }) : t("baseline")}</span></div>
             </div>
-            {data.is_mock && <p className="api-note"><Info size={14} />{t("cmp.mock")}</p>}
           </>)}
         </>))}
 
         {tab === "message" && (<>
           <label className="lbl" htmlFor="instr">{t("instr", { name })}</label>
           <textarea id="instr" rows="3" value={msg} onChange={(e) => setMsg(e.target.value)} placeholder={t("msg.ph")} />
-          <button className="btn" disabled={!msg.trim()} onClick={send}><Send size={15} />{t("send")}</button>
+          <button className="btn" disabled={!msg.trim() || busy} onClick={send}><Send size={15} />{t("send")}</button>
+          {failed && <p className="auth-error">{t("msg.failed")}</p>}
           <h4 className="sub-h">{t("sent")}</h4>
           {mine.length
-            ? <ul className="log">{mine.map((n) => <li key={n.id}><small>{n.t}</small>{noteText(n, t)}</li>)}</ul>
+            ? <ul className="log">{mine.map((n) => (
+              <li key={n.id}><small>{noteTime(n)}<span className={`seen ${n.read ? "on" : ""}`}>{n.read ? <CheckCheck size={14} /> : <Check size={14} />}{t(n.read ? "msg.read" : "msg.sent")}</span></small>{noteText(n, t)}</li>
+            ))}</ul>
             : <p className="empty">{t("noMsgs")}</p>}
         </>)}
 
@@ -88,7 +92,8 @@ export default function PlannerPanel({ driver: wd, truck: wt, trip, plan, assign
 
       {tab === "route" && pick && (
         <footer className="planner-foot">
-          <button className="btn block" disabled={plan === pref} onClick={assign}>
+          {failed && tab === "route" && <p className="auth-error">{t("msg.failed")}</p>}
+          <button className="btn block" disabled={plan === pref || busy} onClick={assign}>
             {plan === pref ? t("assigned", { name: first }) : t("assign", { name })}
           </button>
         </footer>

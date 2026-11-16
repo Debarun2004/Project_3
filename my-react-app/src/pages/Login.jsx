@@ -67,7 +67,7 @@ export default function Login({ onLogin, lang, setLang }) {
 
         <label className="field">
           <span>{isAdmin ? t("auth.email") : t("auth.phone")}</span>
-          <input type={isAdmin ? "text" : "tel"} autoComplete="username" value={login} placeholder={isAdmin ? "admin" : t("auth.phonePh")}
+          <input type={isAdmin ? "text" : "tel"} autoComplete="username" value={login} placeholder={isAdmin ? t("auth.namePh") : t("auth.phonePh")}
             onChange={(e) => { setLogin(e.target.value); setError(""); }} autoFocus />
         </label>
 

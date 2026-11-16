@@ -1,13 +1,13 @@
-import { ArrowDown, ArrowUp, Clock, Fuel, Info, Leaf, Ruler, Sparkles } from "lucide-react";
-import { PREFS, PREF_COLOR, option, useCompare } from "../hooks";
+import { ArrowDown, ArrowUp, Clock, Fuel, Leaf, Ruler, Sparkles } from "lucide-react";
+import { PREFS, PREF_COLOR, option, useRoutes } from "../hooks";
 import { useT } from "../i18n";
 
-// The backend's fastest / balanced / greenest comparison for a trip. `chosen` is the option the control room assigned, if any.
+// Fastest / balanced / greenest for a trip, worked out from the roads drawn on its map. `chosen` is the option the control room assigned, if any.
 export default function RouteOptions({ trip, truck, chosen }) {
   const t = useT();
-  const { data, error } = useCompare(trip, truck);
-  if (error) return <p className="empty">{t("cmp.failed")} ({error.message})</p>;
-  if (!data) return <p className="empty">{t("loading")}</p>;
+  const data = useRoutes(trip, truck);
+  if (!data) return <p className="empty">{t("map.unknown")}</p>;
+  if (!data.options) return <p className="empty">{t("map.via.loading")}</p>;
 
   const all = PREFS.map((p) => option(data, p)), base = all[0], r = all.find((x) => x.pref === chosen);
   const isBase = r === base;
@@ -52,7 +52,6 @@ export default function RouteOptions({ trip, truck, chosen }) {
         {compare(t("cmp.co2"), "co2")}
         {compare(t("cmp.time"), "min")}
       </div>
-      {data.is_mock && <p className="api-note"><Info size={14} />{t("cmp.mock")}</p>}
     </div>
   );
 }

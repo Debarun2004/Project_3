@@ -16,7 +16,7 @@ async function request(path, body) {
     err.status = res.status;
     throw err;
   }
-  return res.json();
+  return res.status === 204 ? null : res.json();
 }
 
 export const getDrivers = () => request("/api/v1/drivers");
@@ -28,23 +28,19 @@ export async function getFleet() {
   return { drivers, trucks, trips, summary, health };
 }
 
-// Fastest / balanced / greenest estimates for one trip. The backend marks these as synthetic (`is_mock`).
-export const compareRoutes = (trip, truck) => request("/routes/compare", {
-  source: trip.source,
-  destination: trip.destination,
-  vehicle_type: truck.vehicle_type,
-  payload_kg: truck.Payload,
-  dispatch_time: new Date().toISOString(),
-  optimization_preference: "balanced",
-});
-
 // Road geometry on the backend's imported OpenStreetMap graph; answers 503 until that graph has been imported.
-export const networkRoute = (source, destination, from, to) => request("/routes/network", {
+export const networkRoute = (source, destination, from, to, preference = "fastest") => request("/routes/network", {
   source,
   destination,
   source_latitude: from[0],
   source_longitude: from[1],
   destination_latitude: to[0],
   destination_longitude: to[1],
-  preference: "fastest",
+  preference,
 });
+
+// Control-room messages and the route option assigned to each driver; `driverId` limits both to one driver.
+export const getDispatch = (driverId) => request(`/api/v1/dispatch${driverId ? `?driver_id=${encodeURIComponent(driverId)}` : ""}`);
+export const sendMessage = (driver_id, text) => request("/api/v1/messages", { driver_id, text });
+export const markRead = (driver_id) => request("/api/v1/messages/read", { driver_id });
+export const setPlan = (driver_id, pref) => request("/api/v1/plans", { driver_id, pref });

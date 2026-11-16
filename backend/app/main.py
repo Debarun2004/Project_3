@@ -10,6 +10,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from app.api.v1.router import api_router
 from app.core.config import API_VERSION, APP_NAME, get_settings
 from app.db.mysql import connect_mysql
+from app.repositories.dispatch import DispatchStore
 from app.repositories.store import FleetStore
 
 
@@ -22,6 +23,7 @@ async def lifespan(application: FastAPI) -> AsyncIterator[None]:
         application.state.fleet_store, engine = connect_mysql(settings)
     else:
         application.state.fleet_store = FleetStore()
+    application.state.dispatch = DispatchStore(application.state.fleet_store.sessions)
     try:
         yield
     finally:

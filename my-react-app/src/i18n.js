@@ -24,7 +24,8 @@ const STRINGS = {
   "auth.title": ["Sign in", "साइन इन करें", "সাইন ইন করুন"],
   "auth.sub": ["Choose your role, then enter your details.", "अपनी भूमिका चुनें, फिर अपना विवरण दर्ज करें।", "আপনার ভূমিকা বেছে নিন, তারপর বিবরণ দিন।"],
   "auth.role": ["Sign in as", "इस रूप में साइन इन करें", "যে ভূমিকায় সাইন ইন করবেন"],
-  "auth.email": ["Username", "यूज़रनेम", "ইউজারনেম"],
+  "auth.email": ["Your name", "आपका नाम", "আপনার নাম"],
+  "auth.namePh": ["e.g. Ananya Sen", "जैसे अनन्या सेन", "যেমন অনন্যা সেন"],
   "auth.phonePh": ["10-digit number", "10 अंकों का नंबर", "10 অঙ্কের নম্বর"],
   "auth.phone": ["Registered phone", "पंजीकृत फ़ोन", "নিবন্ধিত ফোন"],
   "auth.password": ["Password", "पासवर्ड", "পাসওয়ার্ড"],
@@ -42,6 +43,13 @@ const STRINGS = {
   "notif.new": ["New message from control room", "कंट्रोल रूम से नया संदेश", "কন্ট্রোল রুম থেকে নতুন বার্তা"],
   "notif.from": ["Control room", "कंट्रोल रूम", "কন্ট্রোল রুম"],
   "notif.open": ["Open notifications", "सूचनाएँ खोलें", "বিজ্ঞপ্তি খুলুন"],
+  "msg.failed": ["Couldn't reach the backend, so this wasn't saved. Try again.", "बैकएंड से संपर्क नहीं हुआ, इसलिए यह सहेजा नहीं गया। फिर कोशिश करें।", "ব্যাকএন্ডে পৌঁছানো যায়নি, তাই এটি সংরক্ষিত হয়নি। আবার চেষ্টা করুন।"],
+  "msg.sent": ["Sent", "भेजा गया", "পাঠানো হয়েছে"],
+  "msg.read": ["Seen", "देखा गया", "দেখেছেন"],
+  "co2.title": ["CO₂ saved", "CO₂ की बचत", "CO₂ সাশ্রয়"],
+  "co2.driver": ["{name} is saving {kg} kg CO₂ on {route} by taking the {pref} route.", "{name} {route} पर {pref} रूट लेकर {kg} किग्रा CO₂ बचा रहे हैं।", "{name} {route}-এ {pref} রুট নিয়ে {kg} কেজি CO₂ বাঁচাচ্ছেন।"],
+  "co2.total": ["The fleet is saving {kg} kg CO₂ across {n} trips on greener routes.", "बेड़ा हरित रूट पर {n} यात्राओं में {kg} किग्रा CO₂ बचा रहा है।", "বহরটি সবুজ রুটে {n}টি যাত্রায় {kg} কেজি CO₂ বাঁচাচ্ছে।"],
+  "co2.none": ["No CO₂ saved yet. Set a driver to Balanced or Greenest to start saving.", "अभी तक CO₂ की कोई बचत नहीं। बचत शुरू करने के लिए किसी ड्राइवर को संतुलित या सबसे हरित रूट दें।", "এখনও কোনো CO₂ সাশ্রয় হয়নি। সাশ্রয় শুরু করতে কোনো ড্রাইভারকে ভারসাম্যপূর্ণ বা সবচেয়ে সবুজ রুট দিন।"],
   "note.plan": ["Route option set to {r}.", "रूट विकल्प {r} चुना गया।", "রুটের বিকল্প {r} ঠিক করা হয়েছে।"],
 
   loading: ["Loading from the backend…", "बैकएंड से लोड हो रहा है…", "ব্যাকএন্ড থেকে লোড হচ্ছে…"],
@@ -186,6 +194,7 @@ const STRINGS = {
   "map.shrink": ["Exit full screen", "पूरी स्क्रीन से बाहर", "পুরো স্ক্রিন থেকে বেরোন"],
   nextStop: ["Next parcel · {i} of {n}", "अगला पार्सल · {n} में से {i}", "পরের পার্সেল · {n}টির মধ্যে {i}"],
   allDone: ["All deliveries done", "सभी डिलीवरी पूरी", "সব ডেলিভারি সম্পন্ন"],
+  "map.others": ["{n} other road(s) considered", "{n} अन्य सड़क पर विचार किया गया", "আরও {n}টি রাস্তা বিবেচনা করা হয়েছে"],
   "map.zoomIn": ["Zoom in", "ज़ूम इन", "জুম ইন"],
   "map.zoomOut": ["Zoom out", "ज़ूम आउट", "জুম আউট"],
   "map.hub": ["Source", "स्रोत", "উৎস"],
@@ -256,8 +265,10 @@ export const makeT = (lang) => {
 export const LangCtx = createContext("en");
 export const useT = () => makeT(useContext(LangCtx));
 
-// Notes are stored as either free text (typed by the admin) or a key + vars, so system messages translate.
-export const noteText = (n, t) => {
-  if (!n.key) return n.text;
-  return n.key === "note.plan" ? t(n.key, { r: t(`pref.${n.vars.pref}`) }) : t(n.key, n.vars);
+// A message from the backend is either text typed in the control room or a route-option change (`pref`), which translates.
+export const noteText = (n, t) => (n.pref ? t("note.plan", { r: t(`pref.${n.pref}`) }) : n.text);
+// When it was sent, in local time: just the time today, else the date too.
+export const noteTime = (n) => {
+  const d = new Date(n.created_at), hm = d.toTimeString().slice(0, 5);
+  return d.toDateString() === new Date().toDateString() ? hm : `${d.toLocaleDateString("en-GB", { day: "numeric", month: "short" })} ${hm}`;
 };

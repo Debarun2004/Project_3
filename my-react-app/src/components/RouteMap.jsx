@@ -3,7 +3,7 @@ import { Maximize2, Minimize2 } from "lucide-react";
 import { MapContainer, TileLayer, Polyline, Marker, Tooltip, ZoomControl, useMap } from "react-leaflet";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
-import { useRoad } from "../hooks";
+import { PREF_COLOR, useRoutes } from "../hooks";
 import { useT } from "../i18n";
 
 const TILES = "https://tile.openstreetmap.org/{z}/{x}/{y}.png";
@@ -50,7 +50,8 @@ function WheelZoom({ on }) {
 const COLOR = "#3F51B5";
 
 // Draws one trip from its source to its destination, with the truck `progress` (0–1) of the way along.
-export default function RouteMap({ trip, progress = 0, big = false, banner }) {
+// Every candidate road is drawn faintly; the one for `pref` (fastest / balanced / greenest) is drawn on top in its colour.
+export default function RouteMap({ trip, truck, pref, progress = 0, big = false, banner }) {
   const t = useT();
   const [full, setFull] = useState(false);
   useEffect(() => {
@@ -61,12 +62,15 @@ export default function RouteMap({ trip, progress = 0, big = false, banner }) {
     return () => { document.body.style.overflow = ""; window.removeEventListener("keydown", onKey); };
   }, [full]);
   const k = big ? 1.3 : 1; // pin scale
-  const road = useRoad(trip);
-  const line = road?.line;
-  const lines = useMemo(() => (line ? [line] : []), [line]);
+  const road = useRoutes(trip, truck);
+  const roads = road?.roads;
+  const lines = useMemo(() => (roads ? roads.map((r) => r.line) : []), [roads]);
 
   if (!road) return <p className="empty">{t("map.unknown")}</p>;
   const loose = road.via === "straight" || road.via === "loading"; // not following roads
+  const shown = road.options?.[pref ?? "fastest"];
+  const line = shown?.line ?? lines[0];
+  const color = pref ? PREF_COLOR[pref] : COLOR;
 
   return (
     <div className={`map-wrap ${big ? "big" : ""} ${full ? "full" : ""}`}>
@@ -76,9 +80,12 @@ export default function RouteMap({ trip, progress = 0, big = false, banner }) {
         <WheelZoom on={full} />
         <Frame lines={lines} />
 
+        {lines.filter((l) => l !== line).map((l, i) => (
+          <Polyline key={i} positions={l} pathOptions={{ color: "#6E6A80", weight: 4, opacity: 0.45, dashArray: "6 8" }} interactive={false} />
+        ))}
         <Polyline positions={line} pathOptions={{ color: "#fff", weight: 10, opacity: 0.9 }} interactive={false} />
-        <Polyline positions={line} pathOptions={{ color: COLOR, weight: 6, dashArray: loose ? "2 10" : null, lineCap: "round" }}>
-          <Tooltip sticky>{t.d(trip.route_name)}{road.km != null ? ` · ${t("km", { n: road.km.toFixed(1) })}` : ""}</Tooltip>
+        <Polyline key={`${pref}|${line.length}`} positions={line} pathOptions={{ color, weight: 6, dashArray: loose ? "2 10" : null, lineCap: "round" }}>
+          <Tooltip sticky>{t.d(trip.route_name)}{shown ? ` · ${t(`pref.${shown.pref}`)} · ${t("km", { n: shown.km })} · ${t("min", { n: shown.min })}` : ""}</Tooltip>
         </Polyline>
 
         <Marker position={road.from} icon={pin("mk-hub", "H", 28)}><Tooltip>{t("map.hub")} · {t.d(trip.source)}</Tooltip></Marker>
@@ -100,7 +107,9 @@ export default function RouteMap({ trip, progress = 0, big = false, banner }) {
       )}
 
       <div className="map-legend">
-        <span><i className={`sw ${loose ? "dots" : ""}`} style={loose ? undefined : { background: COLOR }} />{t(`map.via.${road.via}`)}</span>
+        {shown && !loose && <span><i className="sw" style={{ background: color }} /><b>{t(`pref.${shown.pref}`)}</b> · {t("km", { n: shown.km })} · {t("min", { n: shown.min })}</span>}
+        {lines.length > 1 && <span><i className="sw alt" />{t("map.others", { n: lines.length - 1 })}</span>}
+        <span><i className={`sw ${loose ? "dots" : ""}`} style={loose ? undefined : { background: "#9a96a8" }} />{t(`map.via.${road.via}`)}</span>
       </div>
     </div>
   );

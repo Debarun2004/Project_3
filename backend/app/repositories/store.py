@@ -37,6 +37,11 @@ class FleetStore:
                     self._demo_data[collection] = json.load(file)
 
     @property
+    def sessions(self) -> sessionmaker[Session] | None:
+        """The SQL session factory, or None when serving demo JSON."""
+        return self._sessions
+
+    @property
     def mode(self) -> str:
         return "mysql" if self._sessions is not None else "demo"
 

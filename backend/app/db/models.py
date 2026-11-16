@@ -1,6 +1,8 @@
 """SQLAlchemy models for fleet data stored in MySQL."""
 
-from sqlalchemy import Boolean, Float, Integer, String
+from datetime import datetime
+
+from sqlalchemy import Boolean, DateTime, Float, Integer, String
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
 
 
@@ -56,3 +58,26 @@ class TripRecord(Base):
     is_mock_estimate: Mapped[bool] = mapped_column(
         Boolean, nullable=False, default=True
     )
+
+
+class MessageRecord(Base):
+    """A control-room message to one driver; `pref` is set when it announces a route option."""
+
+    __tablename__ = "messages"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    driver_id: Mapped[str] = mapped_column(String(64), nullable=False, index=True)
+    text: Mapped[str | None] = mapped_column(String(1000), nullable=True)
+    pref: Mapped[str | None] = mapped_column(String(16), nullable=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime, nullable=False)
+    read: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
+
+
+class RoutePlanRecord(Base):
+    """The route option the control room assigned to a driver."""
+
+    __tablename__ = "route_plans"
+
+    driver_id: Mapped[str] = mapped_column(String(64), primary_key=True)
+    pref: Mapped[str] = mapped_column(String(16), nullable=False)
+    updated_at: Mapped[datetime] = mapped_column(DateTime, nullable=False)

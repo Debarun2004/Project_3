@@ -1,23 +1,21 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { LoaderCircle, LogOut, RefreshCw } from "lucide-react";
-import { getFleet } from "./api";
+import { getDispatch, getFleet, markRead, sendMessage, setPlan } from "./api";
 import { tripFor } from "./data/places";
-import { Motif, LangSwitch } from "./components/ui";
+import { LangSwitch } from "./components/ui";
 import Notifications from "./components/Notifications";
 import AdminDashboard from "./pages/AdminDashboard";
 import DriverDashboard from "./pages/DriverDashboard";
 import Login from "./pages/Login";
 import { LangCtx, makeT } from "./i18n";
 
-const now = () => new Date().toTimeString().slice(0, 5);
-
 // The session survives a refresh but not a closed tab; storage may be blocked, so never rely on it.
 const SESSION_KEY = "prithvi.session";
 const loadSession = () => { try { return JSON.parse(sessionStorage.getItem(SESSION_KEY)); } catch { return null; } };
 const saveSession = (s) => { try { s ? sessionStorage.setItem(SESSION_KEY, JSON.stringify(s)) : sessionStorage.removeItem(SESSION_KEY); } catch { /* ignore */ } };
 
-// "demo" / "mysql" from /health, in words; an unexpected value is shown as sent.
-const dataMode = (t, v) => { const k = `mode.${v}`, s = t(k); return s === k ? v : s; };
+// How often the page asks the backend for new messages and route options.
+const POLL_MS = 4000;
 
 export default function App() {
   const [session, setSession] = useState(loadSession);
@@ -26,11 +24,11 @@ export default function App() {
   const [fleet, setFleet] = useState(null);
   const [error, setError] = useState(null);
   const [attempt, setAttempt] = useState(0);
-  // The backend has no update endpoints yet, so these three live only in this page until it is reloaded:
-  // parcels handed over since loading (per trip), the route option assigned to each driver, and control-room messages.
+  // Parcels handed over since loading (per trip) stay in this page: the backend can't record deliveries yet.
   const [handed, setHanded] = useState({});
-  const [plans, setPlans] = useState({});
-  const [notes, setNotes] = useState([]);
+  // Control-room messages and each driver's route option live in the backend, so every signed-in screen sees them.
+  const [dispatch, setDispatch] = useState({ messages: [], plans: {} });
+  const [toasted, setToasted] = useState(() => new Set()); // message ids already popped up on this screen
 
   const signedIn = !!session;
   useEffect(() => {
@@ -46,16 +44,30 @@ export default function App() {
     return { ...x, parcels_delivered, status: x.status === "in_progress" && parcels_delivered === x.parcels_total ? "completed" : x.status };
   }), [fleet, handed]);
 
-  const sendNote = (note, to) => setNotes((n) => [{ id: n.length + 1, t: now(), to, read: false, toasted: false, ...note }, ...n]);
-  const patchNotes = useCallback((to, patch) => setNotes((n) => n.map((x) => (x.to === to ? { ...x, ...patch } : x))), []);
-  const deliver = (trip_id) => setHanded((h) => ({ ...h, [trip_id]: (h[trip_id] ?? 0) + 1 }));
-  const assignPlan = (driver_id, pref) => setPlans((p) => ({ ...p, [driver_id]: pref }));
   const me = session?.id;
-  const onToasted = useCallback(() => patchNotes(me, { toasted: true }), [patchNotes, me]);
+  const role = session?.role;
+  // A driver only fetches their own messages; the control room fetches everyone's.
+  const refresh = useCallback(() => getDispatch(role === "driver" ? me : undefined).then(setDispatch, () => {}), [role, me]);
+  useEffect(() => {
+    if (!fleet) return;
+    refresh();
+    const h = setInterval(refresh, POLL_MS);
+    window.addEventListener("focus", refresh);
+    return () => { clearInterval(h); window.removeEventListener("focus", refresh); };
+  }, [fleet, refresh]);
+
+  const sendNote = (driver_id, text) => sendMessage(driver_id, text).then(refresh);
+  const assignPlan = (driver_id, pref) => setPlan(driver_id, pref).then(refresh);
+  const deliver = (trip_id) => setHanded((h) => ({ ...h, [trip_id]: (h[trip_id] ?? 0) + 1 }));
+  const onRead = () => {
+    setDispatch((d) => ({ ...d, messages: d.messages.map((m) => ({ ...m, read: true })) }));
+    markRead(me).then(refresh, () => {});
+  };
+  const onToasted = useCallback((id) => setToasted((s) => new Set(s).add(id)), []);
+  const { messages: notes, plans } = dispatch;
   const t = makeT(lang);
   const signIn = (s) => { saveSession(s); setSession(s); };
-  const signOut = () => { saveSession(null); setSession(null); };
-  const role = session?.role;
+  const signOut = () => { saveSession(null); setSession(null); setFleet(null); setDispatch({ messages: [], plans: {} }); };
 
   if (!session) return <LangCtx.Provider value={lang}><div lang={lang}><Login onLogin={signIn} {...{ lang, setLang }} /></div></LangCtx.Provider>;
 
@@ -87,12 +99,12 @@ export default function App() {
       <div lang={lang}>
         <header className="top">
           <div className="top-in">
-            <div className="brand"><Motif size={38} color="var(--saffron)" sw={2} />
+            <div className="brand"><img className="logo" src="/logo.png" alt="" width="44" height="44" />
               <div><h1>{t("brand")}</h1><small>{t("brandSub")}</small></div></div>
             <div className="top-actions">
               <LangSwitch {...{ lang, setLang }} />
               {role === "driver" && (
-                <Notifications notes={notes.filter((n) => n.to === me)} onRead={() => patchNotes(me, { read: true, toasted: true })} onToasted={onToasted} />
+                <Notifications notes={notes} toasted={toasted} onRead={onRead} onToasted={onToasted} />
               )}
               <div className="who-chip"><small>{t(`role.${role}`)}</small><b>{t.d(session.name)}</b></div>
               <button className="ghost-btn signout" onClick={signOut}><LogOut size={14} />{t("auth.logout")}</button>
@@ -100,7 +112,7 @@ export default function App() {
           </div>
         </header>
         {page}
-        <footer className="foot">{t("brand")} · {t("brandSub")}{fleet && ` · ${t("foot.data", { mode: dataMode(t, fleet.health.dataset_status) })}`}</footer>
+        <footer className="foot">{t("brand")} · {t("brandSub")}</footer>
       </div>
     </LangCtx.Provider>
   );

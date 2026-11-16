@@ -1,6 +1,7 @@
 import { useRef, useState } from "react";
 import { ClipboardList, Info, Navigation, PackageCheck, Route, Star, Truck, Users, Warehouse } from "lucide-react";
 import { regionOf, tripFor } from "../data/places";
+import CarbonToasts from "../components/CarbonToasts";
 import PlannerPanel from "../components/PlannerPanel";
 import TableTools from "../components/TableTools";
 import { Title, Stat, Status, Region } from "../components/ui";
@@ -56,8 +57,15 @@ export default function AdminDashboard({ drivers, trucks, trips, summary, plans,
     return <button className={`ghost-btn ${on ? "on" : ""}`} aria-pressed={on} onClick={() => plan(id)}><Route size={14} />{t("plan.btn")}</button>;
   };
 
+  // Drivers given a greener option than fastest, for the CO₂-saved pop-ups.
+  const greener = drivers.filter((d) => plans[d.id] && plans[d.id] !== "fastest").map((d) => {
+    const trip = tripFor(trips, d.id);
+    return { driver: d, trip, truck: truckOf(trip?.truck_id ?? d.truck_id), pref: plans[d.id] };
+  }).filter((x) => x.trip && x.truck);
+
   return (
     <main className="wrap">
+      <CarbonToasts items={greener} />
       <nav className="tabs">{TABS.map((k) => <button key={k} className={tab === k ? "on" : ""} onClick={() => openTab(k)}>{t(`tab.${k}`)}</button>)}</nav>
 
       {tab === "overview" && (<>

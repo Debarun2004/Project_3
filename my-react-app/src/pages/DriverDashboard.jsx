@@ -4,7 +4,7 @@ import RouteMap from "../components/RouteMap";
 import RouteOptions from "../components/RouteOptions";
 import { Title, Status, Region } from "../components/ui";
 import { regionOf } from "../data/places";
-import { useRoad } from "../hooks";
+import { useRoutes } from "../hooks";
 import { useT } from "../i18n";
 
 const CHECKS = 5; // handover steps, worded in i18n as check.0 … check.4
@@ -14,14 +14,15 @@ export default function DriverDashboard({ me, truck, trip, plan, deliver }) {
   const t = useT();
   const [checks, setChecks] = useState([]); // steps ticked for the parcel being handed over
   const [open, setOpen] = useState(true);
-  const road = useRoad(trip);
+  const road = useRoutes(trip, truck);
+  const route = road?.options?.[plan ?? "fastest"]; // the option the control room assigned, else the fastest
   const name = t.d(me.name), first = name.split(" ")[0];
 
   if (!trip) return <main className="wrap driver"><div className="greet"><h1>{t("greet", { name: first })}</h1><p>{t("noTrip", { name })}</p></div></main>;
 
   const n = trip.parcels_total, done = trip.parcels_delivered, live = trip.status === "in_progress";
-  // Driving time still ahead: the trip's estimate (else the map route's own time), scaled by the parcels left.
-  const total = trip.estimated_travel_time_minutes ?? road?.min;
+  // Driving time still ahead: the assigned route's time (else the trip's estimate), scaled by the parcels left.
+  const total = route?.min ?? trip.estimated_travel_time_minutes;
   const left = total != null && n ? Math.round(total * (1 - done / n)) : null;
   const toggle = (i) => setChecks((c) => (c.includes(i) ? c.filter((x) => x !== i) : [...c, i]));
   const handOver = () => { deliver(trip.id); setChecks([]); };
@@ -65,11 +66,11 @@ export default function DriverDashboard({ me, truck, trip, plan, deliver }) {
       </div>
 
       <div className="cols">
-        <div className="card map-card"><Title>{t("yourRoute")}</Title><RouteMap trip={trip} progress={n ? done / n : 0} big banner={banner} />
+        <div className="card map-card"><Title>{t("yourRoute")}</Title><RouteMap trip={trip} truck={truck} pref={plan} progress={n ? done / n : 0} big banner={banner} />
           <div className="conds">
             <span><MapPin size={15} />{t.d(trip.route_name)}</span>
             <Region v={regionOf(trip)} />
-            {road?.km != null && <span><Ruler size={15} />{t("km", { n: road.km.toFixed(1) })}</span>}
+            {route && <span><Ruler size={15} />{t("km", { n: route.km })}</span>}
             {total != null && <span><Clock size={15} />{t("min", { n: Math.round(total) })}</span>}
           </div>
         </div>
