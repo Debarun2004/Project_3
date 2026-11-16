@@ -31,12 +31,12 @@ export default function AdminDashboard({ drivers, trucks, trips, summary, plans,
   const planned = driverOf(planFor);
   const vehicle = (v) => { const k = `vt.${v}`, label = t(k); return label === k ? v : label; }; // unknown types show as stored
   const person = (d, id) => (d
-    ? <span className="person"><span className="avatar sm">{initials(d.name)}</span><span><b>{d.name}</b><small>{d.id}</small></span></span>
+    ? <span className="person"><span className="avatar sm">{initials(t.d(d.name))}</span><span><b>{t.d(d.name)}</b><small>{d.id}</small></span></span>
     : id || dash);
   const est = (v, unit) => (v == null ? dash : t(unit, { n: v }));
   const parcels = (x) => <><small>{t("ofDelivered", { d: x.parcels_delivered, n: x.parcels_total })}</small><div className="bar"><i style={{ width: `${pct(x)}%` }} /></div></>;
   const q = query.trim().toLowerCase();
-  const shown = (rows, search) => rows.filter((x) => (only === "all" || x.status === only) && matches(q, ...search(x)));
+  const shown = (rows, search) => rows.filter((x) => { const s = search(x); return (only === "all" || x.status === only) && matches(q, ...s, ...s.map(t.d)); });
   const tools = (rows, placeholder) => (
     <TableTools {...{ query, setQuery, placeholder, value: only, setValue: setOnly }}
       filters={[["all", t("all"), rows.length], ...STATUSES[tab].map((k) => [k, t(`status.${k}`), rows.filter((x) => x.status === k).length])]} />
@@ -81,9 +81,9 @@ export default function AdminDashboard({ drivers, trucks, trips, summary, plans,
                   return (
                     <tr key={x.id} className={d && d.id === planFor ? "sel" : ""}>
                       <td><b>{x.id}</b><small>{x.registration_number}</small></td>
-                      <td>{d ? d.name : <Status v={x.status} />}</td>
+                      <td>{d ? t.d(d.name) : <Status v={x.status} />}</td>
                       <td>{trip ? parcels(trip) : dash}</td>
-                      <td>{x.route_name || dash}</td>
+                      <td>{t.d(x.route_name) || dash}</td>
                       <td className="end">{d && planBtn(d.id)}</td>
                     </tr>
                   );
@@ -107,7 +107,7 @@ export default function AdminDashboard({ drivers, trucks, trips, summary, plans,
               <tr key={d.id}><td>{person(d)}</td><td>{d.phone}</td><td>{d.licence_number}</td><td>{t("yrs", { n: d.experience_years })}</td>
                 <td><span className="rating"><Star size={13} className="star" fill="currentColor" />{d.rating}</span></td>
                 <td>{d.truck_id ? [d.truck_id, truckOf(d.truck_id)?.registration_number].filter(Boolean).join(" · ") : dash}</td>
-                <td>{d.route_name || dash}</td>
+                <td>{t.d(d.route_name) || dash}</td>
                 <td><Status v={d.status} /></td>
                 <td className="end">{d.status === "on_duty" && planBtn(d.id)}</td></tr>
             )) : noRows(9)}</tbody>
@@ -127,7 +127,7 @@ export default function AdminDashboard({ drivers, trucks, trips, summary, plans,
                   <td>{t("kg", { n: x.Payload.toLocaleString("en-IN") })}</td>
                   <td><Status v={x.status} /></td>
                   <td>{person(d, x.driver_id)}</td>
-                  <td>{x.route_name || dash}</td>
+                  <td>{t.d(x.route_name) || dash}</td>
                   <td className="end">{d && planBtn(d.id)}</td></tr>
               );
             }) : noRows(7)}</tbody>
@@ -144,8 +144,8 @@ export default function AdminDashboard({ drivers, trucks, trips, summary, plans,
               <tr key={x.id}><td><b>{x.id}</b></td>
                 <td>{person(driverOf(x.driver_id), x.driver_id)}</td>
                 <td><b>{x.truck_id}</b><small>{truckOf(x.truck_id)?.registration_number}</small></td>
-                <td>{x.source}<small>→ {x.destination}</small></td>
-                <td>{x.route_name}<small><Region v={regionOf(x)} /></small></td>
+                <td>{t.d(x.source)}<small>→ {t.d(x.destination)}</small></td>
+                <td>{t.d(x.route_name)}<small><Region v={regionOf(x)} /></small></td>
                 <td><Status v={x.status} /></td>
                 <td>{parcels(x)}</td>
                 <td>{est(x.estimated_travel_time_minutes, "min")}</td>

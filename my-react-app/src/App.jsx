@@ -16,6 +16,9 @@ const SESSION_KEY = "prithvi.session";
 const loadSession = () => { try { return JSON.parse(sessionStorage.getItem(SESSION_KEY)); } catch { return null; } };
 const saveSession = (s) => { try { s ? sessionStorage.setItem(SESSION_KEY, JSON.stringify(s)) : sessionStorage.removeItem(SESSION_KEY); } catch { /* ignore */ } };
 
+// "demo" / "mysql" from /health, in words; an unexpected value is shown as sent.
+const dataMode = (t, v) => { const k = `mode.${v}`, s = t(k); return s === k ? v : s; };
+
 export default function App() {
   const [session, setSession] = useState(loadSession);
   const [lang, setLang] = useState("en");
@@ -85,19 +88,19 @@ export default function App() {
         <header className="top">
           <div className="top-in">
             <div className="brand"><Motif size={38} color="var(--saffron)" sw={2} />
-              <div><h1>Prithvi Route</h1><small>{t("brandSub")}</small></div></div>
+              <div><h1>{t("brand")}</h1><small>{t("brandSub")}</small></div></div>
             <div className="top-actions">
               <LangSwitch {...{ lang, setLang }} />
               {role === "driver" && (
                 <Notifications notes={notes.filter((n) => n.to === me)} onRead={() => patchNotes(me, { read: true, toasted: true })} onToasted={onToasted} />
               )}
-              <div className="who-chip"><small>{t(`role.${role}`)}</small><b>{session.name}</b></div>
+              <div className="who-chip"><small>{t(`role.${role}`)}</small><b>{t.d(session.name)}</b></div>
               <button className="ghost-btn signout" onClick={signOut}><LogOut size={14} />{t("auth.logout")}</button>
             </div>
           </div>
         </header>
         {page}
-        <footer className="foot">Prithvi Route · {t("brandSub")}{fleet && ` · ${t("foot.data", { mode: fleet.health.dataset_status })}`}</footer>
+        <footer className="foot">{t("brand")} · {t("brandSub")}{fleet && ` · ${t("foot.data", { mode: dataMode(t, fleet.health.dataset_status) })}`}</footer>
       </div>
     </LangCtx.Provider>
   );

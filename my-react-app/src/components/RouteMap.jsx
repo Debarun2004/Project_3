@@ -72,17 +72,17 @@ export default function RouteMap({ trip, progress = 0, big = false, banner }) {
     <div className={`map-wrap ${big ? "big" : ""} ${full ? "full" : ""}`}>
       <MapContainer className="map" center={road.from} zoom={11} scrollWheelZoom={full} zoomSnap={0.25} zoomControl={false}>
         <TileLayer url={TILES} attribution={ATTRIB} maxZoom={19} />
-        <ZoomControl position="bottomright" />
+        <ZoomControl key={t.lang} position="bottomright" zoomInTitle={t("map.zoomIn")} zoomOutTitle={t("map.zoomOut")} />
         <WheelZoom on={full} />
         <Frame lines={lines} />
 
         <Polyline positions={line} pathOptions={{ color: "#fff", weight: 10, opacity: 0.9 }} interactive={false} />
         <Polyline positions={line} pathOptions={{ color: COLOR, weight: 6, dashArray: loose ? "2 10" : null, lineCap: "round" }}>
-          <Tooltip sticky>{trip.route_name}{road.km != null ? ` · ${t("km", { n: road.km.toFixed(1) })}` : ""}</Tooltip>
+          <Tooltip sticky>{t.d(trip.route_name)}{road.km != null ? ` · ${t("km", { n: road.km.toFixed(1) })}` : ""}</Tooltip>
         </Polyline>
 
-        <Marker position={road.from} icon={pin("mk-hub", "H", 28)}><Tooltip>{t("map.hub")} · {trip.source}</Tooltip></Marker>
-        <Marker position={road.to} icon={pin("mk-drop", "◆", 28)}><Tooltip>{t("map.last")} · {trip.destination}</Tooltip></Marker>
+        <Marker position={road.from} icon={pin("mk-hub", "H", 28)}><Tooltip>{t("map.hub")} · {t.d(trip.source)}</Tooltip></Marker>
+        <Marker position={road.to} icon={pin("mk-drop", "◆", 28)}><Tooltip>{t("map.last")} · {t.d(trip.destination)}</Tooltip></Marker>
         <Marker position={along(line, progress)} zIndexOffset={1000} icon={pin("mk-truck", TRUCK_SVG, 34 * k)} keyboard={false}>
           <Tooltip>{t("map.truck")}</Tooltip>
         </Marker>

@@ -52,7 +52,7 @@ export default function RouteOptions({ trip, truck, chosen }) {
         {compare(t("cmp.co2"), "co2")}
         {compare(t("cmp.time"), "min")}
       </div>
-      {data.is_mock && <p className="api-note"><Info size={14} />{data.notice}</p>}
+      {data.is_mock && <p className="api-note"><Info size={14} />{t("cmp.mock")}</p>}
     </div>
   );
 }

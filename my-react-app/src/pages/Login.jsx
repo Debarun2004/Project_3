@@ -51,7 +51,7 @@ export default function Login({ onLogin, lang, setLang }) {
       <form className="auth-card" onSubmit={submit} noValidate>
         <div className="auth-brand">
           <Motif size={44} color="var(--saffron)" sw={2} />
-          <div><h1>Prithvi Route</h1><small>{t("brandSub")}</small></div>
+          <div><h1>{t("brand")}</h1><small>{t("brandSub")}</small></div>
         </div>
 
         <h2>{t("auth.title")}</h2>
@@ -67,7 +67,7 @@ export default function Login({ onLogin, lang, setLang }) {
 
         <label className="field">
           <span>{isAdmin ? t("auth.email") : t("auth.phone")}</span>
-          <input type={isAdmin ? "text" : "tel"} autoComplete="username" value={login} placeholder={isAdmin ? "admin" : "10-digit number"}
+          <input type={isAdmin ? "text" : "tel"} autoComplete="username" value={login} placeholder={isAdmin ? "admin" : t("auth.phonePh")}
             onChange={(e) => { setLogin(e.target.value); setError(""); }} autoFocus />
         </label>
 

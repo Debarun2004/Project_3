@@ -13,7 +13,7 @@ const TABS = [["route", Route], ["message", MessageSquare], ["deliveries", Packa
 // `trip` and `truck` come from the backend and may be missing (an off-duty driver has neither).
 export default function PlannerPanel({ driver: wd, truck: wt, trip, plan, assignPlan, notes, sendNote }) {
   const t = useT();
-  const first = wd.name.split(" ")[0];
+  const name = t.d(wd.name), first = name.split(" ")[0];
   const [tab, setTab] = useState("route");
   const [bal, setBal] = useState(STOPS[Math.max(PREFS.indexOf(plan), 0)]);
   const [msg, setMsg] = useState("");
@@ -32,10 +32,10 @@ export default function PlannerPanel({ driver: wd, truck: wt, trip, plan, assign
     <aside className="card planner" aria-labelledby="plan-h">
       <header className="planner-head">
         <div className="planner-who">
-          <span className="avatar">{wd.name.split(" ").map((w) => w[0]).join("")}</span>
+          <span className="avatar">{name.split(" ").map((w) => w[0]).join("")}</span>
           <div>
             <small>{t("plan.title")}</small>
-            <h2 id="plan-h">{wd.name}</h2>
+            <h2 id="plan-h">{name}</h2>
             <span className="meta">{wt ? `${wt.id} · ${wt.registration_number} · ` : ""}<Star size={12} className="star" fill="currentColor" />{wd.rating}</span>
           </div>
         </div>
@@ -49,8 +49,8 @@ export default function PlannerPanel({ driver: wd, truck: wt, trip, plan, assign
       ))}</nav>
 
       <div className="planner-body">
-        {tab === "route" && (!trip || !wt ? <p className="empty">{t("noTrip", { name: wd.name })}</p> : (<>
-          <p className="current"><small>{t("who.current")}</small><b>{trip.route_name}</b><Region v={regionOf(trip)} /><span>{trip.source} → {trip.destination}</span></p>
+        {tab === "route" && (!trip || !wt ? <p className="empty">{t("noTrip", { name })}</p> : (<>
+          <p className="current"><small>{t("who.current")}</small><b>{t.d(trip.route_name)}</b><Region v={regionOf(trip)} /><span>{t.d(trip.source)} → {t.d(trip.destination)}</span></p>
           <div className="ends"><span>{t("ends.fast")}</span><span>{t("ends.green")}</span></div>
           <input type="range" min="0" max="100" value={bal} onChange={(e) => setBal(+e.target.value)} aria-label={`${t("ends.fast")} – ${t("ends.green")}`} />
           <div className="chips">{PREFS.map((p, i) => <button key={p} className={pref === p ? "on" : ""} onClick={() => setBal(STOPS[i])}>{t(`pref.${p}`)}</button>)}</div>
@@ -65,12 +65,12 @@ export default function PlannerPanel({ driver: wd, truck: wt, trip, plan, assign
               <div><small><Fuel size={13} />{t("why.fuel")}</small><b>{t("lit", { n: pick.fuel })}</b><span>{dFuel ? `−${t("lit", { n: dFuel })}` : t("baseline")}</span></div>
               <div><small><Ruler size={13} />{t("why.dist")}</small><b>{t("km", { n: pick.km })}</b><span>{dKm ? t("moreKm", { n: dKm }) : t("baseline")}</span></div>
             </div>
-            {data.is_mock && <p className="api-note"><Info size={14} />{data.notice}</p>}
+            {data.is_mock && <p className="api-note"><Info size={14} />{t("cmp.mock")}</p>}
           </>)}
         </>))}
 
         {tab === "message" && (<>
-          <label className="lbl" htmlFor="instr">{t("instr", { name: wd.name })}</label>
+          <label className="lbl" htmlFor="instr">{t("instr", { name })}</label>
           <textarea id="instr" rows="3" value={msg} onChange={(e) => setMsg(e.target.value)} placeholder={t("msg.ph")} />
           <button className="btn" disabled={!msg.trim()} onClick={send}><Send size={15} />{t("send")}</button>
           <h4 className="sub-h">{t("sent")}</h4>
@@ -80,16 +80,16 @@ export default function PlannerPanel({ driver: wd, truck: wt, trip, plan, assign
         </>)}
 
         {tab === "deliveries" && (trip ? (<>
-          <h4 className="sub-h first">{trip.source} → {trip.destination}</h4>
+          <h4 className="sub-h first">{t.d(trip.source)} → {t.d(trip.destination)}</h4>
           <p>{t("ofDelivered", { d: trip.parcels_delivered, n: trip.parcels_total })}</p>
           <div className="bar big"><i style={{ width: `${progress * 100}%` }} /></div>
-        </>) : <p className="empty">{t("noTrip", { name: wd.name })}</p>)}
+        </>) : <p className="empty">{t("noTrip", { name })}</p>)}
       </div>
 
       {tab === "route" && pick && (
         <footer className="planner-foot">
           <button className="btn block" disabled={plan === pref} onClick={assign}>
-            {plan === pref ? t("assigned", { name: first }) : t("assign", { name: wd.name })}
+            {plan === pref ? t("assigned", { name: first }) : t("assign", { name })}
           </button>
         </footer>
       )}

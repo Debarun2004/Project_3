@@ -4,6 +4,7 @@ export const LANGS = [["en", "EN"], ["hi", "हिंदी"], ["bn", "বাং
 
 // key: [English, Hindi, Bengali]
 const STRINGS = {
+  brand: ["Prithvi Route", "पृथ्वी रूट", "পৃথ্বী রুট"],
   brandSub: ["Green Logistics Engine", "ग्रीन लॉजिस्टिक्स इंजन", "গ্রিন লজিস্টিকস ইঞ্জিন"],
   "role.admin": ["Control Room", "कंट्रोल रूम", "কন্ট্রোল রুম"],
   "role.driver": ["Driver", "ड्राइवर", "ড্রাইভার"],
@@ -24,6 +25,7 @@ const STRINGS = {
   "auth.sub": ["Choose your role, then enter your details.", "अपनी भूमिका चुनें, फिर अपना विवरण दर्ज करें।", "আপনার ভূমিকা বেছে নিন, তারপর বিবরণ দিন।"],
   "auth.role": ["Sign in as", "इस रूप में साइन इन करें", "যে ভূমিকায় সাইন ইন করবেন"],
   "auth.email": ["Username", "यूज़रनेम", "ইউজারনেম"],
+  "auth.phonePh": ["10-digit number", "10 अंकों का नंबर", "10 অঙ্কের নম্বর"],
   "auth.phone": ["Registered phone", "पंजीकृत फ़ोन", "নিবন্ধিত ফোন"],
   "auth.password": ["Password", "पासवर्ड", "পাসওয়ার্ড"],
   "auth.show": ["Show password", "पासवर्ड दिखाएँ", "পাসওয়ার্ড দেখান"],
@@ -48,8 +50,12 @@ const STRINGS = {
   "load.hint": ["Start the backend from the backend folder, then try again:", "backend फ़ोल्डर से बैकएंड चालू करें, फिर दोबारा कोशिश करें:", "backend ফোল্ডার থেকে ব্যাকএন্ড চালু করে আবার চেষ্টা করুন:"],
   "load.offline": ["No response from the server.", "सर्वर से कोई जवाब नहीं मिला।", "সার্ভার থেকে কোনো সাড়া মেলেনি।"],
   "load.noRecord": ["This driver is no longer in the backend's driver list. Sign out and sign in again.", "यह ड्राइवर अब बैकएंड की ड्राइवर सूची में नहीं है। साइन आउट करके दोबारा साइन इन करें।", "এই ড্রাইভার আর ব্যাকএন্ডের ড্রাইভার তালিকায় নেই। সাইন আউট করে আবার সাইন ইন করুন।"],
+  "mode.demo": ["built-in demo data", "अंतर्निहित डेमो डेटा", "অন্তর্নির্মিত ডেমো ডেটা"],
+  "mode.mysql": ["MySQL database", "MySQL डेटाबेस", "MySQL ডেটাবেস"],
   "foot.data": ["Backend data source: {mode}", "बैकएंड डेटा स्रोत: {mode}", "ব্যাকএন্ড ডেটা উৎস: {mode}"],
   "trips.mock": ["Time, fuel and CO₂ here are the backend's placeholder estimates, not model predictions.", "यहाँ समय, ईंधन और CO₂ बैकएंड के अस्थायी अनुमान हैं, मॉडल के पूर्वानुमान नहीं।", "এখানে সময়, জ্বালানি ও CO₂ ব্যাকএন্ডের অস্থায়ী অনুমান, মডেলের পূর্বাভাস নয়।"],
+  // The backend's own notice for /routes/compare, which arrives in English only.
+  "cmp.mock": ["Synthetic connectivity-test values only; not calculated from road data or ML.", "केवल कनेक्टिविटी-परीक्षण के कृत्रिम मान; सड़क डेटा या ML से गणना नहीं की गई।", "শুধু সংযোগ-পরীক্ষার কৃত্রিম মান; সড়কের তথ্য বা ML থেকে হিসাব করা নয়।"],
   "cmp.failed": ["The backend couldn't compare routes for this trip.", "बैकएंड इस यात्रा के रूट की तुलना नहीं कर सका।", "ব্যাকএন্ড এই যাত্রার রুট তুলনা করতে পারেনি।"],
   noTrip: ["No trip is assigned to {name} in the backend.", "बैकएंड में {name} को कोई यात्रा नहीं सौंपी गई है।", "ব্যাকএন্ডে {name}-কে কোনো যাত্রা দেওয়া হয়নি।"],
   localOnly: ["Deliveries marked here stay in this browser tab; the backend can't save them yet.", "यहाँ चिह्नित डिलीवरी इसी ब्राउज़र टैब में रहती हैं; बैकएंड अभी इन्हें सहेज नहीं सकता।", "এখানে চিহ্নিত ডেলিভারি এই ব্রাউজার ট্যাবেই থাকে; ব্যাকএন্ড এখনও এগুলি সংরক্ষণ করতে পারে না।"],
@@ -180,16 +186,71 @@ const STRINGS = {
   "map.shrink": ["Exit full screen", "पूरी स्क्रीन से बाहर", "পুরো স্ক্রিন থেকে বেরোন"],
   nextStop: ["Next parcel · {i} of {n}", "अगला पार्सल · {n} में से {i}", "পরের পার্সেল · {n}টির মধ্যে {i}"],
   allDone: ["All deliveries done", "सभी डिलीवरी पूरी", "সব ডেলিভারি সম্পন্ন"],
+  "map.zoomIn": ["Zoom in", "ज़ूम इन", "জুম ইন"],
+  "map.zoomOut": ["Zoom out", "ज़ूम आउट", "জুম আউট"],
   "map.hub": ["Source", "स्रोत", "উৎস"],
   "map.last": ["Destination", "गंतव्य", "গন্তব্য"],
 };
 
+// Words that arrive in the backend's data (people, places, routes), as [Hindi, Bengali].
+// t.d(text) swaps each known word or phrase; anything unknown, and codes such as IDs,
+// phone, licence and plate numbers, stay exactly as stored.
+const DATA = {
+  "Control Room": ["कंट्रोल रूम", "কন্ট্রোল রুম"],
+  // places
+  Kolkata: ["कोलकाता", "কলকাতা"],
+  Howrah: ["हावड़ा", "হাওড়া"],
+  "New Town": ["न्यू टाउन", "নিউ টাউন"],
+  Newtown: ["न्यू टाउन", "নিউ টাউন"],
+  Durgapur: ["दुर्गापुर", "দুর্গাপুর"],
+  Asansol: ["आसनसोल", "আসানসোল"],
+  Bankura: ["बांकुड़ा", "বাঁকুড়া"],
+  Purulia: ["पुरुलिया", "পুরুলিয়া"],
+  Kalimpong: ["कालिम्पोंग", "কালিম্পং"],
+  Darjeeling: ["दार्जिलिंग", "দার্জিলিং"],
+  Central: ["केंद्रीय", "কেন্দ্রীয়"],
+  Hub: ["हब", "হাব"],
+  Depot: ["डिपो", "ডিপো"],
+  Steel: ["स्टील", "স্টিল"],
+  Township: ["टाउनशिप", "টাউনশিপ"],
+  Industrial: ["औद्योगिक", "শিল্প"],
+  Town: ["टाउन", "টাউন"],
+  Market: ["बाज़ार", "বাজার"],
+  Hill: ["पहाड़ी", "পাহাড়ি"],
+  Urban: ["शहरी", "শহুরে"],
+  Rural: ["ग्रामीण", "গ্রামীণ"],
+  Route: ["रूट", "রুট"],
+  Corridor: ["कॉरिडोर", "করিডর"],
+  // people
+  Aritra: ["अरित्र", "অরিত্র"],
+  Sen: ["सेन", "সেন"],
+  Rohan: ["रोहन", "রোহন"],
+  Chatterjee: ["चटर्जी", "চ্যাটার্জি"],
+  Sayan: ["सायन", "সায়ন"],
+  Mukherjee: ["मुखर्जी", "মুখার্জি"],
+  Debolina: ["देबोलीना", "দেবলীনা"],
+  Roy: ["रॉय", "রায়"],
+  Aniket: ["अनिकेत", "অনিকেত"],
+  Ghosh: ["घोष", "ঘোষ"],
+  Soham: ["सोहम", "সোহম"],
+  Banerjee: ["बनर्जी", "ব্যানার্জি"],
+  Moumita: ["मौमिता", "মৌমিতা"],
+  Das: ["दास", "দাস"],
+};
+// Longest first, so "New Town" wins over "Town".
+const DATA_RE = new RegExp(`\\b(${Object.keys(DATA).sort((a, b) => b.length - a.length).join("|")})\\b`, "g");
+
 const IDX = { en: 0, hi: 1, bn: 2 };
 
-export const makeT = (lang) => (key, vars = {}) => {
-  const row = STRINGS[key];
-  const s = row ? row[IDX[lang]] ?? row[0] : key;
-  return s.replace(/\{(\w+)\}/g, (_, k) => vars[k] ?? "");
+export const makeT = (lang) => {
+  const t = (key, vars = {}) => {
+    const row = STRINGS[key];
+    const s = row ? row[IDX[lang]] ?? row[0] : key;
+    return s.replace(/\{(\w+)\}/g, (_, k) => vars[k] ?? "");
+  };
+  t.lang = lang;
+  t.d = (text) => (text == null || lang === "en" ? text : String(text).replace(DATA_RE, (w) => DATA[w][IDX[lang] - 1]));
+  return t;
 };
 
 export const LangCtx = createContext("en");

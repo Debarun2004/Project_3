@@ -15,9 +15,9 @@ export default function DriverDashboard({ me, truck, trip, plan, deliver }) {
   const [checks, setChecks] = useState([]); // steps ticked for the parcel being handed over
   const [open, setOpen] = useState(true);
   const road = useRoad(trip);
-  const first = me.name.split(" ")[0];
+  const name = t.d(me.name), first = name.split(" ")[0];
 
-  if (!trip) return <main className="wrap driver"><div className="greet"><h1>{t("greet", { name: first })}</h1><p>{t("noTrip", { name: me.name })}</p></div></main>;
+  if (!trip) return <main className="wrap driver"><div className="greet"><h1>{t("greet", { name: first })}</h1><p>{t("noTrip", { name })}</p></div></main>;
 
   const n = trip.parcels_total, done = trip.parcels_delivered, live = trip.status === "in_progress";
   // Driving time still ahead: the trip's estimate (else the map route's own time), scaled by the parcels left.
@@ -29,7 +29,7 @@ export default function DriverDashboard({ me, truck, trip, plan, deliver }) {
   const banner = done < n ? (
     <div className="next-stop">
       <span className="next-ic"><Navigation size={17} /></span>
-      <div><small>{t("nextStop", { i: done + 1, n })}</small><b>{trip.destination}</b><span>{left != null && live && <><Clock size={12} /> <strong>{t("minAway", { n: left })}</strong> · </>}{trip.source} → {trip.destination}</span></div>
+      <div><small>{t("nextStop", { i: done + 1, n })}</small><b>{t.d(trip.destination)}</b><span>{left != null && live && <><Clock size={12} /> <strong>{t("minAway", { n: left })}</strong> · </>}{t.d(trip.source)} → {t.d(trip.destination)}</span></div>
     </div>
   ) : (
     <div className="next-stop done"><span className="next-ic"><CircleCheck size={17} /></span><div><b>{t("allDone")}</b></div></div>
@@ -41,7 +41,7 @@ export default function DriverDashboard({ me, truck, trip, plan, deliver }) {
       <li key={i} className={`job ${gone ? "gone" : ""} ${isOpen ? "open" : ""}`}>
         <button className="head" onClick={() => setOpen(!open)} aria-expanded={isOpen} disabled={!next}>
           <span className="no">{gone ? <Check size={15} /> : i + 1}</span>
-          <span className="who"><b>{t("parcel", { i: i + 1 })}</b><small>{gone ? t("deliveredLbl") : trip.destination}</small></span>
+          <span className="who"><b>{t("parcel", { i: i + 1 })}</b><small>{gone ? t("deliveredLbl") : t.d(trip.destination)}</small></span>
           {next && <ChevronDown size={16} className="chev" />}
         </button>
         {isOpen && (
@@ -60,20 +60,20 @@ export default function DriverDashboard({ me, truck, trip, plan, deliver }) {
     <main className="wrap driver">
       <div className="greet">
         <h1>{t("greet", { name: first })}</h1>
-        <p>{t("truckLine", { plate: truck?.registration_number ?? trip.truck_id, route: trip.route_name, d: done, n })} <Status v={trip.status} /></p>
+        <p>{t("truckLine", { plate: truck?.registration_number ?? trip.truck_id, route: t.d(trip.route_name), d: done, n })} <Status v={trip.status} /></p>
         <div className="bar big"><i style={{ width: `${n ? (done / n) * 100 : 0}%` }} /></div>
       </div>
 
       <div className="cols">
         <div className="card map-card"><Title>{t("yourRoute")}</Title><RouteMap trip={trip} progress={n ? done / n : 0} big banner={banner} />
           <div className="conds">
-            <span><MapPin size={15} />{trip.route_name}</span>
+            <span><MapPin size={15} />{t.d(trip.route_name)}</span>
             <Region v={regionOf(trip)} />
             {road?.km != null && <span><Ruler size={15} />{t("km", { n: road.km.toFixed(1) })}</span>}
             {total != null && <span><Clock size={15} />{t("min", { n: Math.round(total) })}</span>}
           </div>
         </div>
-        <div className="card"><Title>{t("why")}</Title>{truck ? <RouteOptions trip={trip} truck={truck} chosen={plan} /> : <p className="empty">{t("noTrip", { name: me.name })}</p>}</div>
+        <div className="card"><Title>{t("why")}</Title>{truck ? <RouteOptions trip={trip} truck={truck} chosen={plan} /> : <p className="empty">{t("noTrip", { name })}</p>}</div>
       </div>
 
       <div className="cols">
