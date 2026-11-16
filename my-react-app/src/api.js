@@ -1,9 +1,11 @@
-// Every call goes to the FastAPI backend through the Vite proxy (see vite.config.js).
+// Calls go to the FastAPI backend. In development the Vite proxy forwards them (see vite.config.js);
+// a deployed build has no proxy, so set VITE_API_URL to the backend's public address when building.
+const BASE = (import.meta.env.VITE_API_URL ?? "").replace(/\/+$/, "");
 
 async function request(path, body) {
   let res;
   try {
-    res = await fetch(path, body ? { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) } : undefined);
+    res = await fetch(BASE + path, body ? { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) } : undefined);
   } catch {
     throw new Error("offline");
   }
