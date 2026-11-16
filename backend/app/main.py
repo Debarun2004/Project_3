@@ -1,9 +1,11 @@
 """FastAPI application entry point."""
 
+import os
 from contextlib import asynccontextmanager
 from collections.abc import AsyncIterator
 
 from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 
 from app.api.v1.router import api_router
 from app.core.config import API_VERSION, APP_NAME, get_settings
@@ -35,5 +37,13 @@ app = FastAPI(
     ),
     version=API_VERSION,
     lifespan=lifespan,
+)
+# A deployed frontend lives on a different address from this API, so browsers need CORS.
+# CORS_ORIGINS is a comma-separated list of allowed sites, e.g. https://my-app.vercel.app ("*" allows any).
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=[o.strip().rstrip("/") for o in os.getenv("CORS_ORIGINS", "*").split(",") if o.strip()],
+    allow_methods=["GET", "POST"],
+    allow_headers=["Content-Type"],
 )
 app.include_router(api_router)
