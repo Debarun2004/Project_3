@@ -5,7 +5,7 @@ export const LANGS = [["en", "EN"], ["hi", "हिंदी"], ["bn", "বাং
 // key: [English, Hindi, Bengali]
 const STRINGS = {
   brand: ["Prithvi Route", "पृथ्वी रूट", "পৃথ্বী রুট"],
-  brandSub: ["Green Logistics Engine", "ग्रीन लॉजिस्टिक्स इंजन", "গ্রিন লজিস্টিকস ইঞ্জিন"],
+  brandSub: ["Dynamic Carbon and Time Aware Logistics Routing", "डायनेमिक कार्बन और समय-सजग लॉजिस्टिक्स रूटिंग", "ডায়নামিক কার্বন ও সময়-সচেতন লজিস্টিকস রাউটিং"],
   "role.admin": ["Control Room", "कंट्रोल रूम", "কন্ট্রোল রুম"],
   "role.driver": ["Driver", "ड्राइवर", "ড্রাইভার"],
   lang: ["Language", "भाषा", "ভাষা"],
