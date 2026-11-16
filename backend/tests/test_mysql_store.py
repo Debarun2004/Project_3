@@ -19,7 +19,7 @@ def test_sql_store_reads_seeded_fleet_records() -> None:
     assert store.mode == "mysql"
     assert len(store.list_records("drivers")) == 7
     assert len(store.list_records("trucks")) == 8
-    assert len(store.list_records("trips")) == 5
+    assert len(store.list_records("trips")) == 7
 
     engine.dispose()
 

@@ -30,7 +30,7 @@ def test_trip_list_labels_estimates_as_mock(client: TestClient) -> None:
     response = client.get("/api/v1/trips")
     assert response.status_code == 200
     trips = response.json()
-    assert len(trips) == 5
+    assert len(trips) == 7
     assert all(trip["is_mock_estimate"] for trip in trips)
 
 
@@ -43,8 +43,8 @@ def test_dashboard_summary_matches_demo_records(client: TestClient) -> None:
         "trucks_total": 8,
         "trucks_in_garage": 2,
         "trucks_on_road": 5,
-        "trips_in_progress": 2,
-        "trips_completed": 2,
+        "trips_in_progress": 4,
+        "trips_completed": 3,
     }
 
 

@@ -8,7 +8,7 @@
     "rating": 4.8,
     "status": "on_duty",
     "truck_id": "TRK-001",
-    "route_name": "Kolkata North Delivery"
+    "route_name": "Kolkata–Howrah Urban Route"
   },
   {
     "id": "DRV-002",
@@ -19,7 +19,7 @@
     "rating": 4.6,
     "status": "on_duty",
     "truck_id": "TRK-002",
-    "route_name": "Salt Lake Express"
+    "route_name": "Kolkata–New Town Urban Route"
   },
   {
     "id": "DRV-003",
@@ -30,7 +30,7 @@
     "rating": 4.7,
     "status": "on_duty",
     "truck_id": "TRK-003",
-    "route_name": "Howrah Central Route"
+    "route_name": "Durgapur–Asansol Industrial Corridor"
   },
   {
     "id": "DRV-004",
@@ -41,7 +41,7 @@
     "rating": 4.9,
     "status": "on_duty",
     "truck_id": "TRK-004",
-    "route_name": "New Town Business Route"
+    "route_name": "Bankura–Purulia Rural Route"
   },
   {
     "id": "DRV-005",
@@ -52,7 +52,7 @@
     "rating": 4.8,
     "status": "on_duty",
     "truck_id": "TRK-005",
-    "route_name": "Park Street Courier Route"
+    "route_name": "Kalimpong–Darjeeling Hill Route"
   },
   {
     "id": "DRV-006",

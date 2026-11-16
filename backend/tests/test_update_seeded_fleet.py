@@ -55,7 +55,7 @@ def test_refresh_updates_seed_rows_and_preserves_user_created_records() -> None:
 
     counts = update_seeded_fleet(engine)
 
-    assert counts == {"drivers": 7, "trucks": 8, "trips": 5}
+    assert counts == {"drivers": 7, "trucks": 8, "trips": 7}
     with Session(engine) as session:
         assert session.get(DriverRecord, "DRV-001").name == "Aritra Sen"
         assert session.get(DriverRecord, "DRV-001").truck_id == "TRK-001"

@@ -1,0 +1,34 @@
+# Python virtual environment
+venv/
+.venv/
+
+# Python cache
+__pycache__/
+*.py[cod]
+
+# Environment variables
+.env
+.env.*
+!.env.example
+
+# Local database files
+data/road_network.sqlite
+data/road_network.sqlite-journal
+
+# Testing
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Temporary files
+*.tmp
+*.temp
+*.swp
+
+# IDE
+.vscode/
+
+# Logs
+*.log
+# One-time MySQL setup script (contains the app password)
+mysql_setup.sql

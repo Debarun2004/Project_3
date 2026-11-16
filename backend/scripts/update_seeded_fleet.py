@@ -37,6 +37,8 @@ ID_PREFIXES = {
     "trip-demo-003": "TRP-003",
     "trip-demo-004": "TRP-004",
     "trip-demo-005": "TRP-005",
+    "trip-demo-006": "TRP-006",
+    "trip-demo-007": "TRP-007",
 }
 
 
