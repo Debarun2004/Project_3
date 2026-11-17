@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { Eye, EyeOff, KeyRound, LoaderCircle, LogIn, ShieldCheck, Truck, TriangleAlert } from "lucide-react";
 import { getDrivers } from "../api";
 import { ADMIN, DRIVER_PASSWORD, authenticate } from "../auth";
-import { Motif, LangSwitch } from "../components/ui";
+import { LangSwitch } from "../components/ui";
 import { useT } from "../i18n";
 
 // Placeholder: drop the real clip into public/ under this name (or change the path).
@@ -50,7 +50,7 @@ export default function Login({ onLogin, lang, setLang }) {
 
       <form className="auth-card" onSubmit={submit} noValidate>
         <div className="auth-brand">
-          <Motif size={44} color="var(--saffron)" sw={2} />
+          <img className="auth-logo" src="/logo.png" alt="" width="56" height="56" />
           <div><h1>{t("brand")}</h1><small>{t("brandSub")}</small></div>
         </div>
 

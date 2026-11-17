@@ -50,3 +50,24 @@ def test_dispatch_in_sql(client: TestClient) -> None:
     assert snap["plans"] == {"DRV-001": "greenest"}
     assert [(m["text"], m["pref"], m["read"]) for m in snap["messages"]] == [(None, "greenest", True), ("first", None, True)]
     engine.dispose()
+
+
+def test_delivery_advances_trip_and_is_logged(client: TestClient) -> None:
+    trip = next(t for t in client.get("/api/v1/trips").json() if t["id"] == "TRP-002")
+    done = trip["parcels_delivered"]
+    r = client.post("/api/v1/trips/TRP-002/deliver", json={"pref": "greenest", "co2_saved_kg": 0.07})
+    assert r.status_code == 200
+    assert r.json()["parcels_delivered"] == done + 1
+    after = next(t for t in client.get("/api/v1/trips").json() if t["id"] == "TRP-002")
+    assert after["parcels_delivered"] == done + 1
+    logged = client.get("/api/v1/dispatch", params={"driver_id": "DRV-002"}).json()["deliveries"]
+    assert [(d["trip_id"], d["parcel"], d["pref"], d["co2_saved_kg"]) for d in logged] == [("TRP-002", done + 1, "greenest", 0.07)]
+
+
+def test_last_parcel_completes_trip_and_more_are_refused(client: TestClient) -> None:
+    trip = next(t for t in client.get("/api/v1/trips").json() if t["id"] == "TRP-001")
+    for _ in range(trip["parcels_total"] - trip["parcels_delivered"]):
+        last = client.post("/api/v1/trips/TRP-001/deliver", json={})
+    assert last.json()["status"] == "completed"
+    assert client.post("/api/v1/trips/TRP-001/deliver", json={}).status_code == 409
+    assert client.post("/api/v1/trips/TRP-999/deliver", json={}).status_code == 404

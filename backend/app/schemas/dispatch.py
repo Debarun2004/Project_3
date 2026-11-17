@@ -37,8 +37,28 @@ class PlanSet(BaseModel):
     pref: RoutePreference
 
 
+class DeliveryCreate(BaseModel):
+    """A parcel handed over: the route option driven and the CO₂ that parcel's share of the trip saved."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    pref: RoutePreference = "fastest"
+    co2_saved_kg: float = Field(default=0, ge=0, le=1000)
+
+
+class Delivery(BaseModel):
+    id: int
+    trip_id: str
+    driver_id: str
+    parcel: int
+    pref: RoutePreference
+    co2_saved_kg: float
+    created_at: datetime
+
+
 class Dispatch(BaseModel):
-    """Messages (newest first) and each driver's assigned route option."""
+    """Messages and deliveries (newest first) and each driver's assigned route option."""
 
     messages: list[Message]
     plans: dict[str, RoutePreference]
+    deliveries: list[Delivery] = []

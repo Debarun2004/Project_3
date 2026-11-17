@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { LoaderCircle, LogOut, RefreshCw } from "lucide-react";
-import { getDispatch, getFleet, markRead, sendMessage, setPlan } from "./api";
+import { deliverParcel, getDispatch, getFleet, getTrips, markRead, sendMessage, setPlan } from "./api";
 import { tripFor } from "./data/places";
 import { LangSwitch } from "./components/ui";
 import Notifications from "./components/Notifications";
@@ -16,6 +16,7 @@ const saveSession = (s) => { try { s ? sessionStorage.setItem(SESSION_KEY, JSON.
 
 // How often the page asks the backend for new messages and route options.
 const POLL_MS = 4000;
+const EMPTY_DISPATCH = { messages: [], plans: {}, deliveries: null };
 
 export default function App() {
   const [session, setSession] = useState(loadSession);
@@ -24,10 +25,9 @@ export default function App() {
   const [fleet, setFleet] = useState(null);
   const [error, setError] = useState(null);
   const [attempt, setAttempt] = useState(0);
-  // Parcels handed over since loading (per trip) stay in this page: the backend can't record deliveries yet.
-  const [handed, setHanded] = useState({});
-  // Control-room messages and each driver's route option live in the backend, so every signed-in screen sees them.
-  const [dispatch, setDispatch] = useState({ messages: [], plans: {} });
+  // Control-room messages, each driver's route option and the delivery log live in the backend, so every
+  // signed-in screen sees them. `deliveries` stays null until the first answer, so old ones don't pop up as new.
+  const [dispatch, setDispatch] = useState(EMPTY_DISPATCH);
   const [toasted, setToasted] = useState(() => new Set()); // message ids already popped up on this screen
 
   const signedIn = !!session;
@@ -38,36 +38,40 @@ export default function App() {
     return () => { live = false; };
   }, [signedIn, attempt]);
 
-  const trips = useMemo(() => (fleet?.trips ?? []).map((x) => {
-    const parcels_delivered = Math.min(x.parcels_total, x.parcels_delivered + (handed[x.id] ?? 0));
-    if (parcels_delivered === x.parcels_delivered) return x;
-    return { ...x, parcels_delivered, status: x.status === "in_progress" && parcels_delivered === x.parcels_total ? "completed" : x.status };
-  }), [fleet, handed]);
+  const trips = useMemo(() => fleet?.trips ?? [], [fleet]);
 
   const me = session?.id;
   const role = session?.role;
-  // A driver only fetches their own messages; the control room fetches everyone's.
-  const refresh = useCallback(() => getDispatch(role === "driver" ? me : undefined).then(setDispatch, () => {}), [role, me]);
+  // A driver only fetches their own messages; the control room fetches everyone's. Trips are re-read too, so
+  // parcels a driver hands over show up on the control room's screen.
+  const refresh = useCallback(() => Promise.all([getDispatch(role === "driver" ? me : undefined), getTrips()]).then(([d, latest]) => {
+    setDispatch(d);
+    setFleet((f) => f && { ...f, trips: latest });
+  }, () => {}), [role, me]);
+  const loaded = !!fleet;
   useEffect(() => {
-    if (!fleet) return;
+    if (!loaded) return;
     refresh();
     const h = setInterval(refresh, POLL_MS);
     window.addEventListener("focus", refresh);
     return () => { clearInterval(h); window.removeEventListener("focus", refresh); };
-  }, [fleet, refresh]);
+  }, [loaded, refresh]);
 
   const sendNote = (driver_id, text) => sendMessage(driver_id, text).then(refresh);
   const assignPlan = (driver_id, pref) => setPlan(driver_id, pref).then(refresh);
-  const deliver = (trip_id) => setHanded((h) => ({ ...h, [trip_id]: (h[trip_id] ?? 0) + 1 }));
+  const deliver = (trip_id, pref, co2_saved_kg) => deliverParcel(trip_id, pref, co2_saved_kg).then((trip) => {
+    setFleet((f) => f && { ...f, trips: f.trips.map((x) => (x.id === trip.id ? trip : x)) });
+    refresh();
+  });
   const onRead = () => {
     setDispatch((d) => ({ ...d, messages: d.messages.map((m) => ({ ...m, read: true })) }));
     markRead(me).then(refresh, () => {});
   };
   const onToasted = useCallback((id) => setToasted((s) => new Set(s).add(id)), []);
-  const { messages: notes, plans } = dispatch;
+  const { messages: notes, plans, deliveries } = dispatch;
   const t = makeT(lang);
   const signIn = (s) => { saveSession(s); setSession(s); };
-  const signOut = () => { saveSession(null); setSession(null); setFleet(null); setDispatch({ messages: [], plans: {} }); };
+  const signOut = () => { saveSession(null); setSession(null); setFleet(null); setDispatch(EMPTY_DISPATCH); };
 
   if (!session) return <LangCtx.Provider value={lang}><div lang={lang}><Login onLogin={signIn} {...{ lang, setLang }} /></div></LangCtx.Provider>;
 
@@ -85,7 +89,7 @@ export default function App() {
       </div></main>
     );
   } else if (role === "admin") {
-    page = <AdminDashboard drivers={fleet.drivers} trucks={fleet.trucks} summary={fleet.summary} {...{ trips, plans, assignPlan, notes, sendNote }} />;
+    page = <AdminDashboard drivers={fleet.drivers} trucks={fleet.trucks} summary={fleet.summary} {...{ trips, plans, assignPlan, notes, sendNote, deliveries }} />;
   } else if (driver) {
     // An off-duty driver has no truck of their own, so fall back to the one their last trip used.
     const trip = tripFor(trips, driver.id);

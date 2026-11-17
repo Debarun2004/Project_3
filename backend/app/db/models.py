@@ -73,6 +73,20 @@ class MessageRecord(Base):
     read: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
 
 
+class DeliveryRecord(Base):
+    """One parcel handed over, with the route option in force and the CO₂ it saved against the fastest option."""
+
+    __tablename__ = "deliveries"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    trip_id: Mapped[str] = mapped_column(String(64), nullable=False, index=True)
+    driver_id: Mapped[str] = mapped_column(String(64), nullable=False, index=True)
+    parcel: Mapped[int] = mapped_column(Integer, nullable=False)
+    pref: Mapped[str] = mapped_column(String(16), nullable=False)
+    co2_saved_kg: Mapped[float] = mapped_column(Float, nullable=False, default=0)
+    created_at: Mapped[datetime] = mapped_column(DateTime, nullable=False)
+
+
 class RoutePlanRecord(Base):
     """The route option the control room assigned to a driver."""
 

@@ -6,7 +6,7 @@ from pathlib import Path
 from typing import Any
 from uuid import uuid4
 
-from sqlalchemy import insert, select
+from sqlalchemy import insert, select, update
 from sqlalchemy.orm import Session, sessionmaker
 
 from app.db.models import DriverRecord, TripRecord, TruckRecord
@@ -76,3 +76,31 @@ class FleetStore:
         with self._sessions.begin() as session:
             session.execute(insert(model).values(**created))
         return created
+
+    def deliver_parcel(self, trip_id: str) -> dict[str, Any] | None:
+        """Count one more parcel delivered on a trip, completing it with the last one.
+
+        Returns the updated trip, or None for an unknown trip. Raises ValueError when nothing is left to deliver.
+        Demo data is changed in memory only, so it resets when the server restarts.
+        """
+
+        def advance(trip: Mapping[str, Any]) -> dict[str, Any]:
+            if trip["status"] not in ("planned", "in_progress") or trip["parcels_delivered"] >= trip["parcels_total"]:
+                raise ValueError(f"Trip {trip_id} has no parcels left to deliver")
+            done = trip["parcels_delivered"] + 1
+            return {"parcels_delivered": done, "status": "completed" if done >= trip["parcels_total"] else "in_progress"}
+
+        if self._sessions is None:
+            trip = next((t for t in self._demo_data["trips"] if t["id"] == trip_id), None)
+            if trip is None:
+                return None
+            trip.update(advance(trip))
+            return trip.copy()
+        with self._sessions.begin() as session:
+            record = session.get(TripRecord, trip_id, with_for_update=True)
+            if record is None:
+                return None
+            current = {c.key: getattr(record, c.key) for c in TripRecord.__mapper__.column_attrs}
+            changes = advance(current)
+            session.execute(update(TripRecord).where(TripRecord.id == trip_id).values(**changes))
+            return {**current, **changes}

@@ -22,7 +22,7 @@ export default function PlannerPanel({ driver: wd, truck: wt, trip, plan, assign
   const pref = PREFS[bal < 34 ? 0 : bal < 67 ? 1 : 2];
   const pick = data && option(data, pref), base = data && option(data, PREFS[0]);
   const dMin = pick && pick.min - base.min, dCo = pick && Math.round(((base.co2 - pick.co2) / base.co2) * 100);
-  const dFuel = pick && +(base.fuel - pick.fuel).toFixed(1), dKm = pick && +(pick.km - base.km).toFixed(1);
+  const dFuel = pick && +(base.fuel - pick.fuel).toFixed(base.fuel < 10 ? 2 : 1), dKm = pick && +(pick.km - base.km).toFixed(1);
   const mine = notes.filter((n) => n.driver_id === wd.id);
   const [busy, setBusy] = useState(false);
   const [failed, setFailed] = useState(false);

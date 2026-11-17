@@ -59,6 +59,7 @@ svg{flex:none}
 .auth-card .auth-demo{border-top:2px dotted var(--t-pink)}
 .auth-card .link-btn:hover{color:var(--t-pink)}
 .auth-brand{display:flex;gap:12px;align-items:center;margin:6px 0 20px}
+.auth-logo{width:56px;height:56px;flex:none;object-fit:contain;filter:drop-shadow(0 1px 2px rgba(0,0,0,.15))}
 .auth-brand h1{font-size:24px;color:var(--indigo);line-height:1.1}
 .auth-brand small{letter-spacing:.1em;text-transform:uppercase;font-size:11px;font-weight:700;color:var(--ink-2);margin-top:3px;line-height:1.35;text-wrap:balance}
 .auth-card h2{font-size:22px}
@@ -80,7 +81,7 @@ svg{flex:none}
 @keyframes rise{from{opacity:0;transform:translateY(12px)}}
 @keyframes shake{25%{transform:translateX(-4px)}75%{transform:translateX(4px)}}
 @media(max-height:720px){
-  .auth-card{padding:30px 24px 22px}.auth-brand{margin:4px 0 14px}.auth-brand svg{width:36px;height:36px}.auth-brand h1{font-size:21px}
+  .auth-card{padding:30px 24px 22px}.auth-brand{margin:4px 0 14px}.auth-logo{width:46px;height:46px}.auth-brand h1{font-size:21px}
   .auth-sub{display:none}.auth-card h2{font-size:20px;margin-bottom:12px}.auth-roles{margin-bottom:12px}
   .field{margin-bottom:10px}.field input{padding:8px 12px}.auth-demo{margin-top:10px;padding-top:10px}
 }

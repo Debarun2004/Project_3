@@ -14,6 +14,8 @@ export default function DriverDashboard({ me, truck, trip, plan, deliver }) {
   const t = useT();
   const [checks, setChecks] = useState([]); // steps ticked for the parcel being handed over
   const [open, setOpen] = useState(true);
+  const [busy, setBusy] = useState(false);
+  const [failed, setFailed] = useState(false);
   const road = useRoutes(trip, truck);
   const route = road?.options?.[plan ?? "fastest"]; // the option the control room assigned, else the fastest
   const name = t.d(me.name), first = name.split(" ")[0];
@@ -25,7 +27,13 @@ export default function DriverDashboard({ me, truck, trip, plan, deliver }) {
   const total = route?.min ?? trip.estimated_travel_time_minutes;
   const left = total != null && n ? Math.round(total * (1 - done / n)) : null;
   const toggle = (i) => setChecks((c) => (c.includes(i) ? c.filter((x) => x !== i) : [...c, i]));
-  const handOver = () => { deliver(trip.id); setChecks([]); };
+  // Each parcel carries an equal share of the CO₂ the assigned option saves over the fastest one for the whole trip.
+  const pref = plan ?? "fastest", opts = road?.options;
+  const share = opts && n ? Math.max(0, (opts.fastest.co2 - opts[pref].co2) / n) : 0;
+  const handOver = () => {
+    setBusy(true); setFailed(false);
+    deliver(trip.id, pref, +share.toFixed(3)).then(() => { setChecks([]); setBusy(false); }, () => { setBusy(false); setFailed(true); });
+  };
 
   const banner = done < n ? (
     <div className="next-stop">
@@ -50,7 +58,8 @@ export default function DriverDashboard({ me, truck, trip, plan, deliver }) {
             {[...Array(CHECKS)].map((_, c) => (
               <label key={c}><input type="checkbox" checked={checks.includes(c)} onChange={() => toggle(c)} />{t(`check.${c}`)}</label>
             ))}
-            <button className="btn" disabled={checks.length < CHECKS} onClick={handOver}>{t("markDelivered")}</button>
+            <button className="btn" disabled={busy || checks.length < CHECKS} onClick={handOver}>{t("markDelivered")}</button>
+            {failed && <p className="api-note" role="alert">{t("msg.failed")}</p>}
           </div>
         )}
       </li>
@@ -80,7 +89,6 @@ export default function DriverDashboard({ me, truck, trip, plan, deliver }) {
       <div className="cols">
         <div className="card"><Title>{t("allDel")}</Title>
           <ul className="jobs">{[...Array(n)].map((_, i) => row(i))}</ul>
-          <p className="api-note">{t("localOnly")}</p>
         </div>
       </div>
     </main>

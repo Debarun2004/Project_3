@@ -5,6 +5,7 @@ import CarbonToasts from "../components/CarbonToasts";
 import PlannerPanel from "../components/PlannerPanel";
 import TableTools from "../components/TableTools";
 import { Title, Stat, Status, Region } from "../components/ui";
+import { useRoutes } from "../hooks";
 import { useT } from "../i18n";
 
 const TABS = ["overview", "drivers", "trucks", "trips"];
@@ -15,7 +16,7 @@ const pct = (x) => (x.parcels_total ? (x.parcels_delivered / x.parcels_total) * 
 const dash = <span className="dash">—</span>;
 
 // Every record shown here comes from the backend; ids on a trip may point at a driver or truck that isn't in the lists.
-export default function AdminDashboard({ drivers, trucks, trips, summary, plans, assignPlan, notes, sendNote }) {
+export default function AdminDashboard({ drivers, trucks, trips, summary, plans, assignPlan, notes, sendNote, deliveries }) {
   const t = useT();
   const [tab, setTab] = useState("overview");
   const [planFor, setPlanFor] = useState(() => (drivers.find((d) => tripFor(trips, d.id)) ?? drivers[0])?.id); // driver shown in the planning panel
@@ -34,7 +35,6 @@ export default function AdminDashboard({ drivers, trucks, trips, summary, plans,
   const person = (d, id) => (d
     ? <span className="person"><span className="avatar sm">{initials(t.d(d.name))}</span><span><b>{t.d(d.name)}</b><small>{d.id}</small></span></span>
     : id || dash);
-  const est = (v, unit) => (v == null ? dash : t(unit, { n: v }));
   const parcels = (x) => <><small>{t("ofDelivered", { d: x.parcels_delivered, n: x.parcels_total })}</small><div className="bar"><i style={{ width: `${pct(x)}%` }} /></div></>;
   const q = query.trim().toLowerCase();
   const shown = (rows, search) => rows.filter((x) => { const s = search(x); return (only === "all" || x.status === only) && matches(q, ...s, ...s.map(t.d)); });
@@ -57,15 +57,10 @@ export default function AdminDashboard({ drivers, trucks, trips, summary, plans,
     return <button className={`ghost-btn ${on ? "on" : ""}`} aria-pressed={on} onClick={() => plan(id)}><Route size={14} />{t("plan.btn")}</button>;
   };
 
-  // Drivers given a greener option than fastest, for the CO₂-saved pop-ups.
-  const greener = drivers.filter((d) => plans[d.id] && plans[d.id] !== "fastest").map((d) => {
-    const trip = tripFor(trips, d.id);
-    return { driver: d, trip, truck: truckOf(trip?.truck_id ?? d.truck_id), pref: plans[d.id] };
-  }).filter((x) => x.trip && x.truck);
 
   return (
     <main className="wrap">
-      <CarbonToasts items={greener} />
+      <CarbonToasts {...{ drivers, trips, trucks, plans, deliveries }} />
       <nav className="tabs">{TABS.map((k) => <button key={k} className={tab === k ? "on" : ""} onClick={() => openTab(k)}>{t(`tab.${k}`)}</button>)}</nav>
 
       {tab === "overview" && (<>
@@ -156,15 +151,33 @@ export default function AdminDashboard({ drivers, trucks, trips, summary, plans,
                 <td>{t.d(x.route_name)}<small><Region v={regionOf(x)} /></small></td>
                 <td><Status v={x.status} /></td>
                 <td>{parcels(x)}</td>
-                <td>{est(x.estimated_travel_time_minutes, "min")}</td>
-                <td>{est(x.estimated_fuel_consumption_liters, "lit")}</td>
-                <td>{est(x.estimated_co2_emissions_kg, "kg")}</td></tr>
+                <TripEstimate trip={x} truck={truckOf(x.truck_id)} pref={plans[x.driver_id] ?? "fastest"} /></tr>
             )) : noRows(10)}</tbody>
           </table>
-          {trips.some((x) => x.is_mock_estimate) && <p className="api-note"><Info size={14} />{t("trips.mock")}</p>}
+          <p className="api-note"><Info size={14} />{t("trips.est")}</p>
         </div>
       )}
 
     </main>
   );
+}
+
+// Time, fuel and CO₂ for a trip on its assigned option, from the same road calculations as the planner and the
+// driver's screen; the backend's stored estimate only while roads load or when the trip's places can't be mapped.
+function TripEstimate({ trip, truck, pref }) {
+  const t = useT();
+  const routes = useRoutes(trip, truck), o = routes?.options?.[pref];
+  const show = (v, unit) => (v == null ? <span className="dash">—</span> : t(unit, { n: v }));
+  if (!o) {
+    return (<>
+      <td>{show(trip.estimated_travel_time_minutes, "min")}</td>
+      <td>{show(trip.estimated_fuel_consumption_liters, "lit")}</td>
+      <td>{show(trip.estimated_co2_emissions_kg, "kg")}</td>
+    </>);
+  }
+  return (<>
+    <td>{show(o.min, "min")}<small>{t(`pref.${pref}`)}</small></td>
+    <td>{show(o.fuel, "lit")}</td>
+    <td>{show(o.co2, "kg")}</td>
+  </>);
 }

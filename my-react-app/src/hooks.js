@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { networkRoute } from "./api";
-import { locate } from "./data/places";
+import { locate, regionOf } from "./data/places";
 
 // One request per distinct key for the life of the page; a failed request is forgotten so it can be retried.
 const cache = new Map();
@@ -55,7 +55,7 @@ const haversine = (a, b) => {
   return 12742 * Math.asin(Math.sqrt(s));
 };
 
-// Up to three genuinely different roads between two places, fastest first.
+// Up to five genuinely different roads between two places, fastest first.
 async function loadCandidates(trip, from, to) {
   let via = "backend", found;
   try {
@@ -68,13 +68,13 @@ async function loadCandidates(trip, from, to) {
     const ask = (offs, alt) => Promise.allSettled([...(alt ? [osrm([from, to], true)] : []), ...offs.map((o) => osrm([from, detour(from, to, o), to]))])
       .then((tries) => tries.flatMap((x) => (x.status === "fulfilled" ? x.value : [])));
     found = await ask([0.12, -0.12], true);
-    if (distinct(found).length < 3) found = found.concat(await ask([0.05, -0.05, 0.22, -0.22]));
+    if (distinct(found).length < 4) found = found.concat(await ask([0.03, -0.03, 0.06, -0.06, 0.2, -0.2, 0.3, -0.3]));
   }
   if (!found.length) {
     const km = haversine(from, to) * 1.3; // rough road length when no router answers
     return { via: "straight", roads: [{ line: [from, to], km, min: (km / 40) * 60 }] };
   }
-  return { via, roads: distinct(found).slice(0, 3) };
+  return { via, roads: distinct(found).slice(0, 5) };
 }
 
 // Fastest first, without near-duplicates or roads far longer or slower than the fastest.
@@ -98,39 +98,45 @@ const STYLE = {
   balanced: { cap: 70, eco: 0.96, slow: 1.03 },
   greenest: { cap: 55, eco: 0.9, slow: 1.06 },
 };
+// In stop-and-go city traffic, smooth driving saves more fuel than on open roads.
+const URBAN_ECO = { fastest: 1, balanced: 0.97, greenest: 0.86 };
+// The quickest road is the one most traffic takes, so it has more stop-and-go than the quieter alternatives.
+// Extra fuel on it, by region (an assumption: the app has no live traffic data).
+const BUSY = { urban: 1.12, industrial: 1.08, hilly: 1.06, rural: 1.03 };
 
-function drive(road, truck, pref) {
-  const s = STYLE[pref];
+function drive(road, truck, pref, region, busy = false) {
+  const s = STYLE[pref], eco = (region === "urban" ? URBAN_ECO[pref] : s.eco) * (busy ? BUSY[region] ?? 1.05 : 1);
   const v = Math.min(Math.max(road.km / (road.min / 60), 10), s.cap); // average km/h
   const rate = (BASE_RATE[truck?.vehicle_type] ?? 0.15) * (1 + (truck?.Payload ?? 0) / 30000);
-  const fuel = road.km * rate * (1 + 0.00012 * (v - 50) ** 2) * s.eco; // fuel use per km is lowest near 50 km/h
+  const fuel = road.km * rate * (1 + 0.00012 * (v - 50) ** 2) * eco; // fuel use per km is lowest near 50 km/h
   const minutes = (road.km / v) * 60 * s.slow;
   return {
     pref, line: road.line,
     raw: { min: minutes, co2: fuel * CO2_PER_LITRE }, // unrounded, for comparing options
     km: +road.km.toFixed(1),
     min: Math.round(minutes),
-    fuel: +fuel.toFixed(1),
-    co2: +(fuel * CO2_PER_LITRE).toFixed(1),
+    fuel: +fuel.toFixed(fuel < 10 ? 2 : 1), // small trips need the extra digit to tell options apart
+    co2: +(fuel * CO2_PER_LITRE).toFixed(fuel * CO2_PER_LITRE < 10 ? 2 : 1),
   };
 }
 
 // Picks a road for each option. Fastest is the quickest road driven normally. Every way of giving the roads to balanced
 // and greenest is tried; only orders that stay honest count (CO₂ falls and time rises from fastest → balanced → greenest),
-// and among those the one using the most different roads wins, then the one saving the most CO₂.
-// Driving the fastest road more gently always qualifies, so there is always an answer.
-function buildOptions(roads, truck) {
-  const fastest = drive(roads[0], truck, "fastest");
+// and among those the one using the most different roads wins (three different roads when possible), then the one
+// saving the most CO₂. Driving the fastest road more gently always qualifies, so there is always an answer.
+function buildOptions(roads, truck, region) {
+  const go = (i, pref) => drive(roads[i], truck, pref, region, i === 0);
+  const fastest = go(0, "fastest");
   let best = null;
-  roads.forEach((rb, b) => roads.forEach((rg, g) => {
-    const balanced = drive(rb, truck, "balanced"), greenest = drive(rg, truck, "greenest");
+  roads.forEach((_, b) => roads.forEach((__, g) => {
+    const balanced = go(b, "balanced"), greenest = go(g, "greenest");
     const [f, m, l] = [fastest.raw, balanced.raw, greenest.raw];
     const honest = f.co2 > m.co2 && m.co2 > l.co2 && f.min <= m.min && m.min <= l.min;
     if (!honest) return;
     const score = new Set([0, b, g]).size * 1000 + (f.co2 - l.co2) / f.co2;
     if (!best || score > best.score) best = { score, balanced, greenest };
   }));
-  best ??= { balanced: drive(roads[0], truck, "balanced"), greenest: drive(roads[0], truck, "greenest") };
+  best ??= { balanced: go(0, "balanced"), greenest: go(0, "greenest") };
   return { fastest, balanced: best.balanced, greenest: best.greenest };
 }
 
@@ -141,7 +147,7 @@ export function loadRoutes(trip, truck) {
   const from = locate(trip?.source), to = locate(trip?.destination);
   if (!from || !to || String(from) === String(to)) return Promise.resolve(null);
   return cached(`roads|${from}|${to}`, () => loadCandidates(trip, from, to))
-    .then(({ via, roads }) => ({ from, to, via, roads, options: buildOptions(roads, truck) }));
+    .then(({ via, roads }) => ({ from, to, via, roads, options: buildOptions(roads, truck, regionOf(trip)) }));
 }
 
 // The same, as a hook. Returns null when the trip's places can't be located; `data` is missing while roads load.
@@ -149,10 +155,10 @@ export function useRoutes(trip, truck) {
   const from = locate(trip?.source), to = locate(trip?.destination);
   const ok = from && to && String(from) !== String(to);
   const { data: found, error } = useCached(ok ? `roads|${from}|${to}` : null, () => loadCandidates(trip, from, to));
-  const vt = truck?.vehicle_type, payload = truck?.Payload;
+  const vt = truck?.vehicle_type, payload = truck?.Payload, region = regionOf(trip);
   return useMemo(() => {
     if (!ok) return null;
     if (!found) return { from, to, via: error ? "straight" : "loading", roads: [{ line: [from, to] }], error };
-    return { from, to, via: found.via, roads: found.roads, options: buildOptions(found.roads, { vehicle_type: vt, Payload: payload }) };
-  }, [ok, from, to, found, error, vt, payload]);
+    return { from, to, via: found.via, roads: found.roads, options: buildOptions(found.roads, { vehicle_type: vt, Payload: payload }, region) };
+  }, [ok, from, to, found, error, vt, payload, region]);
 }

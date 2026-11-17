@@ -43,8 +43,8 @@ def test_dashboard_summary_matches_demo_records(client: TestClient) -> None:
         "trucks_total": 8,
         "trucks_in_garage": 2,
         "trucks_on_road": 5,
-        "trips_in_progress": 4,
-        "trips_completed": 3,
+        "trips_in_progress": 5,
+        "trips_completed": 2,
     }
 
 

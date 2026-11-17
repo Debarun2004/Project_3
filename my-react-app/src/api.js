@@ -44,3 +44,6 @@ export const getDispatch = (driverId) => request(`/api/v1/dispatch${driverId ? `
 export const sendMessage = (driver_id, text) => request("/api/v1/messages", { driver_id, text });
 export const markRead = (driver_id) => request("/api/v1/messages/read", { driver_id });
 export const setPlan = (driver_id, pref) => request("/api/v1/plans", { driver_id, pref });
+export const getTrips = () => request("/api/v1/trips");
+// One parcel handed over on a trip, with the route option driven and the CO₂ that parcel's share of the trip saved.
+export const deliverParcel = (trip_id, pref, co2_saved_kg) => request(`/api/v1/trips/${encodeURIComponent(trip_id)}/deliver`, { pref, co2_saved_kg });
